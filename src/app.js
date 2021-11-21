@@ -13,12 +13,16 @@ let mProjection;
 let mView;
 
 /* GLSL */
+let uColor;
 
 /* Global Vars */
 let time = 0;           // Global simulation time in days
 let speed = 1 / 60;         // Speed (how many days added to time on each render pass
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
+
+/* Shader Programs */
+let program;
 
 const edge = 2.0;
 
@@ -27,19 +31,21 @@ function eventListeners() {
 }
 
 function setup(shaders) {
+	// Setup
 	let canvas = document.getElementById("gl-canvas");
 	let aspect = canvas.width / canvas.height;
 
 	gl = setupWebGL(canvas);
+	mode = gl.TRIANGLES; 
 
-	let program = buildProgramFromSources(gl, shaders["shader.vert"], shaders["shader.frag"]);
+	// Build Programs
+	program = buildProgramFromSources(gl, shaders["shader.vert"], shaders["shader.frag"]);
 
-	mode = gl.LINES; 
-
+	// Event Listener Setup
 	resize_canvas();
 	window.addEventListener("resize", resize_canvas);
 
-	document.onkeydown = function(event) {
+	document.onkeydown = (event) => {
 		switch (event.key) {
 			case 'w':
 				mode = gl.LINES; 
@@ -56,17 +62,26 @@ function setup(shaders) {
 			case '-':
 				if (animation) speed /= 1.1;
 				break;
-			}
 		}
+	}
 
-		gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
-		CUBE.init(gl);
-		SPHERE.init(gl);
-
-		gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
+	// Attrib Locations
+			
+	// Uniform Locations
+	uColor = gl.getUniformLocation(program, 'uColor')
 		
-		window.requestAnimationFrame(render);
+	// WebGL
+	
+		
+
+	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+	CUBE.init(gl);
+	SPHERE.init(gl);
+
+	gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
+	
+	window.requestAnimationFrame(render);
 
 	function resize_canvas(event) {
 		canvas.width = window.innerWidth;
@@ -109,6 +124,12 @@ function setup(shaders) {
 		for (let i = -10; i < 10; i++) {
 			for (let j = -10; j < 10; j++) {
 				pushMatrix()
+					if ((i % 2 == 0) ? (j % 2 == 0) : (j % 2 != 0)) {
+						gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)))
+					} else {
+						gl.uniform3fv(uColor, flatten(vec3(0.0, 1.0, 0.0)))
+					}
+					
 					drawTile(i, 0, j)
 				popMatrix()
 			}
