@@ -5,6 +5,7 @@ import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix
 import * as SPHERE from '../libs/sphere.js';
 import * as CUBE from '../libs/cube.js';
 import * as TORUS from '../libs/torus.js';
+import * as CYLINDER from '../libs/cylinder.js';
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -72,14 +73,12 @@ function setup(shaders) {
 	uColor = gl.getUniformLocation(program, 'uColor')
 		
 	// WebGL
-	
-		
-
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
 	CUBE.init(gl);
 	SPHERE.init(gl);
 	TORUS.init(gl);
+	CYLINDER.init(gl);
 
 	gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
 	
@@ -115,17 +114,34 @@ function setup(shaders) {
 	// Tank Drawing
 	
 	function drawWheel(posX, posY, posZ) {
-		pushMatrix()
-			multTranslation([posX, posY, posZ]);
-			multScale([1.0, 1.0, 1.0]);
-			multRotationX(90)
-			multRotationY(0)
+		pushMatrix();
+			multTranslation([posX, posY + 0.7 , posZ]);
+			multRotationX(90);
+			multRotationY(0);
 			multRotationZ(0);
-
+			multScale([1.0, 1.0, 1.0]);
+		
 			uploadModelView();
 
 			gl.uniform3fv(uColor, flatten(vec3(0.180, 0.203, 0.250)));
 			TORUS.draw(gl, program, mode);
+		popMatrix();
+	}
+
+	function drawAxis(posX, posY, posZ) {
+		pushMatrix()
+		multTranslation([posX, 0.7, 2]);
+			multRotationX(90);
+			multRotationY(0);
+			multRotationZ(0);
+
+			multScale([0.2, 4.0, 0.2]);
+
+			uploadModelView();
+
+			//gl.uniform3fv(uColor, flatten(vec3(0.298, 0.337, 0.415)));
+			gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)));
+			CYLINDER.draw(gl, program, mode);
 		popMatrix()
 	}
 
@@ -138,6 +154,19 @@ function setup(shaders) {
 		uploadModelView();
 
 		CUBE.draw(gl, program, mode);
+	}
+
+	function drawDebugCube() {
+		pushMatrix()
+		multTranslation([0, 0 + 0.5 , 0]);
+		multScale([1, 1, 1])
+
+		uploadModelView()
+		
+		gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)))
+
+		CUBE.draw(gl, program, mode);
+		popMatrix()
 	}
 	
 	function drawTileSet() {
@@ -170,6 +199,9 @@ function setup(shaders) {
 
 		drawTileSet();
 		drawWheel(0.0, 0.0, 0.0);
+		drawAxis(0.0, 0.0, 0.0);
+		drawWheel(0.0, 0.0, 4.0);
+		//drawDebugCube();
 	}
 }
 
