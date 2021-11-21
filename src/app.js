@@ -1,9 +1,9 @@
-import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../../libs/utils.js";
-import { ortho, lookAt, flatten, vec3 } from "../../libs/MV.js";
-import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation } from "../../libs/stack.js";
+import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
+import { ortho, lookAt, flatten, vec3 } from "../libs/MV.js";
+import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation } from "../libs/stack.js";
 
-import * as SPHERE from '../../libs/sphere.js';
-import * as CUBE from '../../libs/cube.js';
+import * as SPHERE from '../libs/sphere.js';
+import * as CUBE from '../libs/cube.js';
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -12,6 +12,9 @@ let gl;
 let mProjection;
 let mView;
 
+/* GLSL */
+
+/* Global Vars */
 let time = 0;           // Global simulation time in days
 let speed = 1 / 60;         // Speed (how many days added to time on each render pass
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
@@ -30,8 +33,6 @@ function setup(shaders) {
 	gl = setupWebGL(canvas);
 
 	let program = buildProgramFromSources(gl, shaders["shader.vert"], shaders["shader.frag"]);
-
-	//let mProjection = ortho(- VP_DISTANCE * aspect, VP_DISTANCE * aspect, - VP_DISTANCE, VP_DISTANCE, - 3 * VP_DISTANCE, 3 * VP_DISTANCE);
 
 	mode = gl.LINES; 
 
@@ -59,7 +60,10 @@ function setup(shaders) {
 		}
 
 		gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+		CUBE.init(gl);
 		SPHERE.init(gl);
+
 		gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
 		
 		window.requestAnimationFrame(render);
@@ -71,7 +75,8 @@ function setup(shaders) {
 		aspect = canvas.width / canvas.height;
 
 		gl.viewport(0,0,canvas.width, canvas.height);
-		//mProjection = ortho(- VP_DISTANCE * aspect, VP_DISTANCE * aspect, - VP_DISTANCE, VP_DISTANCE, - 3 * VP_DISTANCE, 3 * VP_DISTANCE);
+
+		mView = lookAt(vec3(0, 0, 0), vec3(-1, -1, -2), vec3(0, 1, 0));
 		setupProjection();
 	}
 
@@ -90,72 +95,9 @@ function setup(shaders) {
 		gl.uniformMatrix4fv(gl.getUniformLocation(program, "mModelView"), false, flatten(modelView()));
 	}
 
-	/*
-	function Sun() {
-		// Don't forget to scale the sun, rotate it around the y axis at the correct speed
-		// ..
-		multScale([SUN_DIAMETER, SUN_DIAMETER, SUN_DIAMETER]);
-		multRotationY((360 * time) / SUN_DAY);
-
-		// Send the current modelview matrix to the vertex shader
-		uploadModelView();
-
-		// Draw a sphere representing the sun
-		SPHERE.draw(gl, program, mode);
-	}
-
-	function Mercury() { 
-		multScale([MERCURY_DIAMETER, MERCURY_DIAMETER, MERCURY_DIAMETER]);
-		multRotationY((360 * time) / MERCURY_DAY);
-
-		// Send the current modelview matrix to the vertex shader
-		uploadModelView();
-
-		// Draw a sphere representing the sun
-		SPHERE.draw(gl, program, mode);
-	}
-
-	function Venus() {
-		multScale([VENUS_DIAMETER, VENUS_DIAMETER, VENUS_DIAMETER]);
-		multRotationY((360 * time) / VENUS_DAY);
-
-		uploadModelView();
-
-		SPHERE.draw(gl, program, mode);
-	}
-
-	function Earth() {
-		multScale([EARTH_DIAMETER, EARTH_DIAMETER, EARTH_DIAMETER]);
-		multRotationY((360 * time) / EARTH_DAY);
-
-		uploadModelView();
-
-		SPHERE.draw(gl, program, mode);
-	}
-
-	function Moon() {
-		multScale([MOON_DIAMETER, MOON_DIAMETER, MOON_DIAMETER]);
-
-		uploadModelView();
-
-		SPHERE.draw(gl, program, mode);
-	}
-
-	function EarthAndMoon() {
-		pushMatrix();
-			Earth();
-		popMatrix();
-
-		pushMatrix();
-			multRotationY([360 * time / MOON_YEAR])
-			multTranslation([MOON_ORBIT * 60, 0, 0])
-			Moon();
-		popMatrix()
-	}
-	*/
-
-	function drawTile(posX, posY) {
-		multScale([1, 1, 1])
+	function drawTile(posX, posY, posZ) {
+		multTranslation([posX, posY, posZ])
+		multScale([1, 0.1, 1])
 		multRotationY(0)
 		
 		uploadModelView();
@@ -164,7 +106,13 @@ function setup(shaders) {
 	}
 	
 	function drawTileSet() {
-		
+		for (let i = -10; i < 10; i++) {
+			for (let j = -10; j < 10; j++) {
+				pushMatrix()
+					drawTile(i, 0, j)
+				popMatrix()
+			}
+		}	
 	}
 
 	function render() {
@@ -177,37 +125,10 @@ function setup(shaders) {
 			
 		gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
 		
-		mView = lookAt(vec3(0, 0, 0), vec3(-1, -1, -2), vec3(0, 1, 0));
-		setupProjection();
 		
 		loadMatrix(mView);
 
-
-		//loadMatrix(lookAt(vec3(0, 0, 0), vec3(-1, -1, -2), vec3(0, 1, 0)));
-
-		drawTile(0, 0)
-
-		/*
-		pushMatrix();
-			Sun();
-		popMatrix();
-		pushMatrix();
-			multRotationY([360 * time / MERCURY_YEAR]);
-			multTranslation([MERCURY_ORBIT, 0, 0]);
-			Mercury();
-		popMatrix();
-		pushMatrix();
-			multRotationY([360 * time / VENUS_YEAR]);
-			multTranslation([VENUS_ORBIT, 0, 0]);
-			Venus();
-		popMatrix();
-			
-		pushMatrix();
-			multRotationY([360 * time / EARTH_YEAR]);
-			multTranslation([EARTH_ORBIT, 0, 0])
-			EarthAndMoon();
-		popMatrix();
-		*/
+		drawTileSet()
 	}
 }
 
