@@ -1,9 +1,10 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
 import { ortho, lookAt, flatten, vec3 } from "../libs/MV.js";
-import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation } from "../libs/stack.js";
+import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation, multRotationX, multRotationZ } from "../libs/stack.js";
 
 import * as SPHERE from '../libs/sphere.js';
 import * as CUBE from '../libs/cube.js';
+import * as TORUS from '../libs/torus.js';
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -78,6 +79,7 @@ function setup(shaders) {
 
 	CUBE.init(gl);
 	SPHERE.init(gl);
+	TORUS.init(gl);
 
 	gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
 	
@@ -110,10 +112,28 @@ function setup(shaders) {
 		gl.uniformMatrix4fv(gl.getUniformLocation(program, "mModelView"), false, flatten(modelView()));
 	}
 
+	// Tank Drawing
+	
+	function drawWheel(posX, posY, posZ) {
+		pushMatrix()
+			multTranslation([posX, posY, posZ]);
+			multScale([1.0, 1.0, 1.0]);
+			multRotationX(90)
+			multRotationY(0)
+			multRotationZ(0);
+
+			uploadModelView();
+
+			gl.uniform3fv(uColor, flatten(vec3(0.180, 0.203, 0.250)));
+			TORUS.draw(gl, program, mode);
+		popMatrix()
+	}
+
+	// Tileset Drawing
+
 	function drawTile(posX, posY, posZ) {
-		multTranslation([posX, posY, posZ])
-		multScale([1, 0.1, 1])
-		multRotationY(0)
+		multTranslation([posX, posY, posZ]);
+		multScale([1, 0.1, 1]);
 		
 		uploadModelView();
 
@@ -125,12 +145,12 @@ function setup(shaders) {
 			for (let j = -10; j < 10; j++) {
 				pushMatrix()
 					if ((i % 2 == 0) ? (j % 2 == 0) : (j % 2 != 0)) {
-						gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)))
+						gl.uniform3fv(uColor, flatten(vec3(0.639, 0.745, 0.549)))
 					} else {
-						gl.uniform3fv(uColor, flatten(vec3(0.0, 1.0, 0.0)))
+						gl.uniform3fv(uColor, flatten(vec3(0.368, 0.505, 0.674)))
 					}
 					
-					drawTile(i, 0, j)
+					drawTile(i, -0.05, j)
 				popMatrix()
 			}
 		}	
@@ -146,10 +166,10 @@ function setup(shaders) {
 			
 		gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
 		
-		
 		loadMatrix(mView);
 
-		drawTileSet()
+		drawTileSet();
+		drawWheel(0.0, 0.0, 0.0);
 	}
 }
 
