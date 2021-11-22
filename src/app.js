@@ -51,6 +51,9 @@ function setup(shaders) {
 
 	document.onkeydown = (event) => {
 		switch (event.key) {
+			case 'ArrowUp':
+				console.log('xixi')
+				break;
 			case 'w':
 				mode = gl.LINES; 
 				break;
@@ -105,6 +108,14 @@ function setup(shaders) {
 
 	// Tank Drawing
 	
+	function drawTank(posX, posY, posZ) {
+		
+	}
+
+	function drawWheelSet(posX, posY, posZ) {
+		drawWheel
+	}
+	
 	function drawWheel(posX, posY, posZ) {
 		pushMatrix();
 			multTranslation([posX, posY + 0.7 , posZ]);
@@ -122,12 +133,12 @@ function setup(shaders) {
 
 	function drawAxis(posX, posY, posZ) {
 		pushMatrix()
-		multTranslation([posX, 0.7, 2]);
+			multTranslation([posX, 0.7, 2]);
 			multRotationX(90);
 			multRotationY(0);
 			multRotationZ(0);
 
-			multScale([0.3, 4.0, 0.3]);
+			multScale([0.25, 4.0, 0.25]);
 
 			uploadModelView();
 
@@ -189,11 +200,19 @@ function setup(shaders) {
 		
 		loadMatrix(mView);
 
+		/*
 		drawTileSet();
 		drawWheel(0.0, 0.0, 0.0);
 		drawAxis(0.0, 0.0, 0.0);
 		drawWheel(0.0, 0.0, 4.0);
-		//drawDebugCube();
+		*/
+
+		drawTileSet();
+
+		pushMatrix();
+			drawTank();
+		popMatrix();
+
 	}
 }
 
