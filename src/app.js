@@ -25,6 +25,8 @@ let speed = 1 / 60;         // Speed (how many days added to time on each render
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
 
+let tankPosition = [0.0, 0.0, 0.0]
+
 /* Shader Programs */
 let program;
 
@@ -52,7 +54,10 @@ function setup(shaders) {
 	document.onkeydown = (event) => {
 		switch (event.key) {
 			case 'ArrowUp':
-				console.log('xixi')
+				tankPosition[0] -= 0.05;
+				break;
+			case 'ArrowDown':
+				tankPosition[0] += 0.05;
 				break;
 			case 'w':
 				mode = gl.LINES; 
@@ -109,67 +114,72 @@ function setup(shaders) {
 	// Tank Drawing
 	
 	function drawTank(posX, posY, posZ) {
-		
+		drawFrame(posX, posY, posZ);
 	}
 
-	function drawWheelSet(posX, posY, posZ) {
-		drawWheel
-	}
-	
-	function drawWheel(posX, posY, posZ) {
+	function drawFrame(posX, posY, posZ) {
 		pushMatrix();
-			multTranslation([posX, posY + 0.7 , posZ]);
-			multRotationX(90);
-			multRotationY(0);
-			multRotationZ(0);
-			multScale([1.0, 1.0, 1.0]);
-		
-			uploadModelView();
-
-			gl.uniform3fv(uColor, flatten(vec3(0.180, 0.203, 0.250)));
-			TORUS.draw(gl, program, mode);
+			drawWheelSet(posX, posY, posZ)
+		popMatrix();
+		pushMatrix();
+			drawWheelSet(posX + 1.5, posY, posZ);
+		popMatrix();
+		pushMatrix();
+			drawWheelSet(posX + 3.5, posY, posZ)
+		popMatrix();
+		pushMatrix();
+			drawWheelSet(posX + 5.0, posY, posZ);
 		popMatrix();
 	}
 
+	function drawWheelSet(posX, posY, posZ) {
+		pushMatrix();
+			drawWheel(posX, posY, posZ);
+		popMatrix();
+		pushMatrix();
+			drawAxis(posX, posY, posZ);
+		popMatrix();
+			drawWheel(posX, posY, posZ + 4.0);
+		popMatrix();
+	}
+	
+	function drawWheel(posX, posY, posZ) {
+		multTranslation([posX, posY + 0.7, posZ]);
+		multRotationX(90.0);
+		multRotationY(0.0);
+		multRotationZ(0.0);
+		multScale([1.0, 1.0, 1.0]);
+		
+		uploadModelView();
+
+		gl.uniform3fv(uColor, flatten(vec3(0.180, 0.203, 0.250)));
+		TORUS.draw(gl, program, mode);
+	}
+
 	function drawAxis(posX, posY, posZ) {
-		pushMatrix()
-			multTranslation([posX, 0.7, 2]);
-			multRotationX(90);
-			multRotationY(0);
-			multRotationZ(0);
+		multTranslation([posX, 0.7, 2.0]);
+		multRotationX(90.0);
+		multRotationY(0.0);
+		multRotationZ(0.0);
 
-			multScale([0.25, 4.0, 0.25]);
+		multScale([0.25, 4.0, 0.25]);
 
-			uploadModelView();
+		uploadModelView();
 
-			//gl.uniform3fv(uColor, flatten(vec3(0.298, 0.337, 0.415)));
-			gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)));
-			CYLINDER.draw(gl, program, mode);
-		popMatrix()
+		//gl.uniform3fv(uColor, flatten(vec3(0.298, 0.337, 0.415)));
+		gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)));
+		CYLINDER.draw(gl, program, mode);
 	}
 
 	// Tileset Drawing
 
 	function drawTile(posX, posY, posZ) {
 		multTranslation([posX, posY, posZ]);
-		multScale([1, 0.1, 1]);
+		multScale([1.0, 0.1, 1.0]);
 		
 		uploadModelView();
 
 		CUBE.draw(gl, program, mode);
-	}
-
-	function drawDebugCube() {
-		pushMatrix()
-		multTranslation([0, 0 + 0.5 , 0]);
-		multScale([1, 1, 1])
-
-		uploadModelView()
-		
-		gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)))
-
-		CUBE.draw(gl, program, mode);
-		popMatrix()
 	}
 	
 	function drawTileSet() {
@@ -200,18 +210,8 @@ function setup(shaders) {
 		
 		loadMatrix(mView);
 
-		/*
 		drawTileSet();
-		drawWheel(0.0, 0.0, 0.0);
-		drawAxis(0.0, 0.0, 0.0);
-		drawWheel(0.0, 0.0, 4.0);
-		*/
-
-		drawTileSet();
-
-		pushMatrix();
-			drawTank();
-		popMatrix();
+		drawTank(tankPosition[0], tankPosition[1], tankPosition[2]);
 
 	}
 }
