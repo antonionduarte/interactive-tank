@@ -122,40 +122,54 @@ function setup(shaders) {
 	function drawFrame(posX, posY, posZ) {
 		pushMatrix();
 			drawWheelSet(posX, posY, posZ)
-		popMatrix();
-		pushMatrix();
 			drawWheelSet(posX + 1.5, posY, posZ);
-		popMatrix();
-		pushMatrix();
 			drawWheelSet(posX + 3.5, posY, posZ)
-		popMatrix();
-		pushMatrix();
 			drawWheelSet(posX + 5.0, posY, posZ);
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([posX + 2.5, posY + 1, posZ + 2.0]);
+			multRotationZ(90.0);
+			multScale([0.3, 5.0, 0.3])
+
+			gl.uniform3fv(uColor, flatten(vec3(0.0, 0.0, 1.0)));
+			uploadModelView();
+
+			CYLINDER.draw(gl, program, mode);
 		popMatrix();
 	}
 
 	function drawWheelSet(posX, posY, posZ) {
-		pushMatrix();
-			drawWheel(posX, posY, posZ);
-		popMatrix();
+		drawWheel(posX, posY, posZ);
+		
 		pushMatrix();
 			drawAxis(posX, posY, posZ);
 		popMatrix();
-			drawWheel(posX, posY, posZ + 4.0);
-		popMatrix();
+
+		drawWheel(posX, posY, posZ + 4.0);
 	}
 	
 	function drawWheel(posX, posY, posZ) {
-		multTranslation([posX, posY + 0.7, posZ]);
-		multRotationX(90.0);
-		multRotationY(0.0);
-		multRotationZ(0.0);
-		multScale([1.0, 1.0, 1.0]);
-		
-		uploadModelView();
+		pushMatrix();
+			multTranslation([posX, posY + 0.7, posZ]);
+			multRotationX(90.0);
+			multRotationY(0.0);
+			multRotationZ(0.0);
+			
+			pushMatrix();
+				multScale([1.0, 1.0, 1.0])
+				uploadModelView();
+				gl.uniform3fv(uColor, flatten(vec3(0.180, 0.203, 0.250)));
+			
+				TORUS.draw(gl, program, mode);
+			popMatrix();
 
-		gl.uniform3fv(uColor, flatten(vec3(0.180, 0.203, 0.250)));
-		TORUS.draw(gl, program, mode);
+			gl.uniform3fv(uColor, flatten(vec3(0.0, 1.0, 0.0)))
+			multScale([0.5, 0.3, 0.5]);
+			uploadModelView();
+
+			CYLINDER.draw(gl, program, mode);
+		popMatrix()
 	}
 
 	function drawAxis(posX, posY, posZ) {
