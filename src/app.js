@@ -14,7 +14,7 @@ let gl;
 let mProjection;
 let mView;
 
-const VP_DISTANCE = 10;
+let VP_DISTANCE = 10;
 
 /* GLSL */
 let uColor;
@@ -69,10 +69,12 @@ function setup(shaders) {
 				animation = !animation;
 				break; 
 			case '+':
-				if (animation) speed *= 1.1;
+				VP_DISTANCE -= 0.5;
+				resize_canvas();
 				break;
 			case '-':
-				if (animation) speed /= 1.1;
+				VP_DISTANCE += 0.5;
+				resize_canvas();
 				break;
 		}
 	}
@@ -100,7 +102,7 @@ function setup(shaders) {
 
 		aspect = canvas.width / canvas.height;
 
-		gl.viewport(0,0,canvas.width, canvas.height);
+		gl.viewport(0, 0, canvas.width, canvas.height);
 
 		//mView = lookAt(vec3(1, 1, 1), vec3(-1, -1, -2), vec3(0, 1, 0));
 		mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
