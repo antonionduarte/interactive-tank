@@ -14,6 +14,8 @@ let gl;
 let mProjection;
 let mView;
 
+const VP_DISTANCE = 10;
+
 /* GLSL */
 let uColor;
 
@@ -92,19 +94,9 @@ function setup(shaders) {
 
 		gl.viewport(0,0,canvas.width, canvas.height);
 
-		mView = lookAt(vec3(0, 0, 0), vec3(-1, -1, -2), vec3(0, 1, 0));
-		setupProjection();
-	}
-
-	function setupProjection() {
-		if (canvas.width < canvas.height) {
-			const yLim = edge * canvas.height / canvas.width;
-			mProjection = ortho(-edge, edge, -yLim, yLim, -10, 10);
-		}
-		else {
-			const xLim = edge * canvas.width / canvas.height;
-			mProjection = ortho(-xLim, xLim, -edge, edge, -10, 10);
-		}
+		//mView = lookAt(vec3(1, 1, 1), vec3(-1, -1, -2), vec3(0, 1, 0));
+		mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
+		mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
 	}
 
 	function uploadModelView() {
@@ -135,7 +127,7 @@ function setup(shaders) {
 			multRotationY(0);
 			multRotationZ(0);
 
-			multScale([0.2, 4.0, 0.2]);
+			multScale([0.3, 4.0, 0.3]);
 
 			uploadModelView();
 
@@ -170,8 +162,8 @@ function setup(shaders) {
 	}
 	
 	function drawTileSet() {
-		for (let i = -10; i < 10; i++) {
-			for (let j = -10; j < 10; j++) {
+		for (let i = -15; i < 15; i++) {
+			for (let j = -15; j < 15; j++) {
 				pushMatrix()
 					if ((i % 2 == 0) ? (j % 2 == 0) : (j % 2 != 0)) {
 						gl.uniform3fv(uColor, flatten(vec3(0.639, 0.745, 0.549)))
