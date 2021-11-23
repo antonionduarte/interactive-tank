@@ -114,7 +114,7 @@ function setup(shaders) {
 				mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
 				break;
 			case '4':
-				mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
+				mView = lookAt(vec3(-1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
 				break;
 		}
 	}
