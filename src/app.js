@@ -158,7 +158,7 @@ function setup(shaders) {
 	
 	function drawTank(posX, posY, posZ) {
 		pushMatrix();
-			multTranslation([posX - (TANK_LENGTH/2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH/2)]);
+			multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
 		
 			drawFrame();
 		popMatrix();
@@ -186,7 +186,7 @@ function setup(shaders) {
 	}
 
 	function drawDrivingAxle(middleOffset = 0) {
-		multTranslation([TANK_LENGTH/2, 0, TANK_WIDTH/2 + middleOffset]);
+		multTranslation([TANK_LENGTH / 2, 0, TANK_WIDTH / 2 + middleOffset]);
 		multRotationZ(90.0);
 		multScale([0.3, TANK_LENGTH, 0.3])
 
@@ -202,7 +202,7 @@ function setup(shaders) {
 	function drawWheelGroup(dist) {
 		multTranslation([dist, 0, 0]);
 
-		for(let x = 0; x < GROUPS_OF; x++) {
+		for (let x = 0; x < GROUPS_OF; x++) {
 			drawWheelSet(MIN_DIST)
 		}
 	}
@@ -242,7 +242,7 @@ function setup(shaders) {
 	}
 
 	function drawWheelAxle() {
-		multTranslation([0, 0, TANK_WIDTH/2]);
+		multTranslation([0, 0, TANK_WIDTH / 2]);
 		multRotationX(90.0);
 
 		multScale([0.25, TANK_WIDTH , 0.25]);
@@ -295,7 +295,7 @@ function setup(shaders) {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 				
 		gl.useProgram(program);
-			
+		
 		gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
 		
 		loadMatrix(mView);
