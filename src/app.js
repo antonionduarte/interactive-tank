@@ -283,9 +283,13 @@ function setup(shaders) {
 
 	//=========================================================================
 	function simulatePhysics() {
-		let energy = 1/2 * TANK_MASS * objSpeed;
+		let f = -Math.sign(objSpeed) * (FRICTION_COEF * EARTH_ACCELERATION); 
 
-		tankPosition[0] += (objSpeed - (FRICTION_COEF * (TANK_MASS * EARTH_ACCELERATION)));
+		let a = f/TANK_MASS;
+
+		objSpeed += a;
+
+		tankPosition[0] += objSpeed;
 	}
 
 	function render() {
