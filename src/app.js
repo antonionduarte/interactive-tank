@@ -21,7 +21,7 @@ let uColor;
 
 /* Global Vars */
 let time = 0;           // Global simulation time in days
-let speed = 1 / 60;         // Speed (how many days added to time on each render pass
+let speed = 1 / 60;     // Speed (how many days added to time on each render pass
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
 
@@ -31,6 +31,34 @@ let tankPosition = [0.0, 0.0, 0.0]
 let program;
 
 const edge = 2.0;
+
+//Colors
+const TILE_COLOR_1 = vec3(0.639, 0.745, 0.549);
+const TILE_COLOR_2 = vec3(0.368, 0.505, 0.674);
+const WHEEL_COLOR = vec3(0.180, 0.203, 0.250);
+const HUBCAP_COLOR = vec3(0.0, 1.0, 0.0);
+const WHEEL_AXLE_COLOR = vec3(1.0, 0.0, 0.0);
+const MAIN_AXLE_COLOR = vec3(0.0, 0.0, 1.0);
+const MAIN_ARMOR_COLOR = vec3(0.254,0.325,0.231);
+
+//Characteristics
+const TANK_LENGTH = 10.0;
+const TANK_MASS = 12000;
+const TANK_WIDTH = 4.0;
+const MIN_DIST = 1.75;
+
+const WHEEL_RADIUS = 0.7;
+const GROUPS_OF = 2;
+
+//Physics
+const MAX_SPEED = 3;
+const ACCELERATION = 0.05;
+const FRICTION_COEF = 0.4;
+const EARTH_ACCELERATION = 9.8; //m.s^2
+
+let objSpeed = 0;
+//=========================================================================
+
 
 function eventListeners() {
 
@@ -54,10 +82,10 @@ function setup(shaders) {
 	document.onkeydown = (event) => {
 		switch (event.key) {
 			case 'ArrowUp':
-				tankPosition[0] -= 0.05;
+				objSpeed -= ACCELERATION;
 				break;
 			case 'ArrowDown':
-				tankPosition[0] += 0.05;
+				objSpeed += ACCELERATION;
 				break;
 			case 'w':
 				mode = gl.LINES; 
@@ -75,6 +103,18 @@ function setup(shaders) {
 			case '-':
 				VP_DISTANCE += 0.5;
 				resize_canvas();
+				break;
+			case '1':
+				mView = lookAt(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(0, 1, 0));
+				break;
+			case '2':
+				mView = lookAt(vec3(0,1,0), vec3(0,-1,0), vec3(-1,0,0));
+				break;
+			case '3':
+				mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
+				break;
+			case '4':
+				mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
 				break;
 		}
 	}
@@ -104,8 +144,8 @@ function setup(shaders) {
 
 		gl.viewport(0, 0, canvas.width, canvas.height);
 
-		//mView = lookAt(vec3(1, 1, 1), vec3(-1, -1, -2), vec3(0, 1, 0));
 		mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
+
 		mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
 	}
 
@@ -113,80 +153,107 @@ function setup(shaders) {
 		gl.uniformMatrix4fv(gl.getUniformLocation(program, "mModelView"), false, flatten(modelView()));
 	}
 
+	//=========================================================================
 	// Tank Drawing
 	
 	function drawTank(posX, posY, posZ) {
-		drawFrame(posX, posY, posZ);
-	}
-
-	function drawFrame(posX, posY, posZ) {
 		pushMatrix();
-			drawWheelSet(posX, posY, posZ)
-			drawWheelSet(posX + 1.5, posY, posZ);
-			drawWheelSet(posX + 3.5, posY, posZ)
-			drawWheelSet(posX + 5.0, posY, posZ);
-		popMatrix();
-
-		pushMatrix();
-			multTranslation([posX + 2.5, posY + 1, posZ + 2.0]);
-			multRotationZ(90.0);
-			multScale([0.3, 5.0, 0.3])
-
-			gl.uniform3fv(uColor, flatten(vec3(0.0, 0.0, 1.0)));
-			uploadModelView();
-
-			CYLINDER.draw(gl, program, mode);
-		popMatrix();
-	}
-
-	function drawWheelSet(posX, posY, posZ) {
-		drawWheel(posX, posY, posZ);
+			multTranslation([posX - (TANK_LENGTH/2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH/2)]);
 		
-		pushMatrix();
-			drawAxis(posX, posY, posZ);
+			drawFrame();
 		popMatrix();
-
-		drawWheel(posX, posY, posZ + 4.0);
 	}
-	
-	function drawWheel(posX, posY, posZ) {
+
+	function drawFrame() {
+		
+		//Draws wheels and axles using the grouped method, also possible through individual addition.
 		pushMatrix();
-			multTranslation([posX, posY + 0.7, posZ]);
-			multRotationX(90.0);
-			multRotationY(0.0);
-			multRotationZ(0.0);
-			
-			pushMatrix();
-				multScale([1.0, 1.0, 1.0])
-				uploadModelView();
-				gl.uniform3fv(uColor, flatten(vec3(0.180, 0.203, 0.250)));
-			
-				TORUS.draw(gl, program, mode);
-			popMatrix();
-
-			gl.uniform3fv(uColor, flatten(vec3(0.0, 1.0, 0.0)))
-			multScale([0.5, 0.3, 0.5]);
-			uploadModelView();
-
-			CYLINDER.draw(gl, program, mode);
-		popMatrix()
+			drawWheelGroup(0.5);
+			drawWheelGroup(1);
+		popMatrix();
+	
+		pushMatrix();
+			drawDrivingAxle();
+		popMatrix();
+	
 	}
 
-	function drawAxis(posX, posY, posZ) {
-		multTranslation([posX, 0.7, 2.0]);
-		multRotationX(90.0);
-		multRotationY(0.0);
-		multRotationZ(0.0);
+	//=========================================================================
+	//Armour
 
-		multScale([0.25, 4.0, 0.25]);
+	function drawArmour() {
+		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+	}
 
+	function drawDrivingAxle(middleOffset = 0) {
+		multTranslation([TANK_LENGTH/2, 0, TANK_WIDTH/2 + middleOffset]);
+		multRotationZ(90.0);
+		multScale([0.3, TANK_LENGTH, 0.3])
+
+		gl.uniform3fv(uColor, flatten(MAIN_AXLE_COLOR));
 		uploadModelView();
 
-		//gl.uniform3fv(uColor, flatten(vec3(0.298, 0.337, 0.415)));
-		gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)));
 		CYLINDER.draw(gl, program, mode);
 	}
 
+	//=========================================================================
+	//Wheel drawing
+
+	function drawWheelGroup(dist) {
+		multTranslation([dist, 0, 0]);
+
+		for(let x = 0; x < GROUPS_OF; x++) {
+			drawWheelSet(MIN_DIST)
+		}
+	}
+
+	function drawWheelSet(dist) {
+		multTranslation([dist, 0, 0]);
+
+		pushMatrix();
+			drawWheel();
+		popMatrix();
+
+		pushMatrix();
+			drawWheelAxle();
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([0, 0, TANK_WIDTH]);
+			drawWheel();
+		popMatrix();
+	}
+
+	function drawWheel() {
+		multRotationX(90.0);
+		
+		//===================
+		uploadModelView();
+		gl.uniform3fv(uColor, flatten(WHEEL_COLOR));
+		
+		TORUS.draw(gl, program, mode);
+		
+		//===================
+		multScale([0.5, 0.3, 0.5]);
+		uploadModelView();
+		gl.uniform3fv(uColor, flatten(HUBCAP_COLOR))
+
+		CYLINDER.draw(gl, program, mode);
+	}
+
+	function drawWheelAxle() {
+		multTranslation([0, 0, TANK_WIDTH/2]);
+		multRotationX(90.0);
+
+		multScale([0.25, TANK_WIDTH , 0.25]);
+
+		uploadModelView();
+
+		gl.uniform3fv(uColor, flatten(WHEEL_AXLE_COLOR));
+		CYLINDER.draw(gl, program, mode);
+	}
+
+	//=========================================================================
 	// Tileset Drawing
 
 	function drawTile(posX, posY, posZ) {
@@ -201,17 +268,24 @@ function setup(shaders) {
 	function drawTileSet() {
 		for (let i = -15; i < 15; i++) {
 			for (let j = -15; j < 15; j++) {
-				pushMatrix()
+				pushMatrix();
 					if ((i % 2 == 0) ? (j % 2 == 0) : (j % 2 != 0)) {
-						gl.uniform3fv(uColor, flatten(vec3(0.639, 0.745, 0.549)))
+						gl.uniform3fv(uColor, flatten(TILE_COLOR_1));
 					} else {
-						gl.uniform3fv(uColor, flatten(vec3(0.368, 0.505, 0.674)))
+						gl.uniform3fv(uColor, flatten(TILE_COLOR_2));
 					}
 					
-					drawTile(i, -0.05, j)
-				popMatrix()
+					drawTile(i, -0.05, j);
+				popMatrix();
 			}
 		}	
+	}
+
+	//=========================================================================
+	function simulatePhysics() {
+		let energy = 1/2 * TANK_MASS * objSpeed;
+
+		tankPosition[0] += (objSpeed - (FRICTION_COEF * (TANK_MASS * EARTH_ACCELERATION)));
 	}
 
 	function render() {
@@ -229,6 +303,7 @@ function setup(shaders) {
 		drawTileSet();
 		drawTank(tankPosition[0], tankPosition[1], tankPosition[2]);
 
+		simulatePhysics()
 	}
 }
 
