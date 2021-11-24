@@ -6,6 +6,7 @@ import * as SPHERE from '../libs/sphere.js';
 import * as CUBE from '../libs/cube.js';
 import * as TORUS from '../libs/torus.js';
 import * as CYLINDER from '../libs/cylinder.js';
+import * as PYRAMID from '../libs/pyramid.js';
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -13,6 +14,8 @@ let gl;
 /* Matrices */
 let mProjection;
 let mView;
+
+let mTank;
 
 let VP_DISTANCE = 10;
 
@@ -25,7 +28,10 @@ let speed = 1 / 60;     // Speed (how many days added to time on each render pas
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
 
+/*Tank metrics*/
 let tankPosition = [0.0, 0.0, 0.0]
+let turretAngle = 0.0;
+let barrelAngle = 0.0;
 
 /* Shader Programs */
 let program;
@@ -40,6 +46,7 @@ const HUBCAP_COLOR = vec3(0.0, 1.0, 0.0);
 const WHEEL_AXLE_COLOR = vec3(1.0, 0.0, 0.0);
 const MAIN_AXLE_COLOR = vec3(0.0, 0.0, 1.0);
 const MAIN_ARMOR_COLOR = vec3(0.254,0.325,0.231);
+const MAIN_ARMOR_COLOR_2 = vec3(0.154,0.225,0.131);
 
 //Characteristics
 const TANK_LENGTH = 10.0;
@@ -50,11 +57,16 @@ const MIN_DIST = 1.75;
 const WHEEL_RADIUS = 0.7;
 const GROUPS_OF = 2;
 
+const MIN_DEPRESSION = 10.0
+const MAX_ELEVATION = 30.0
+
 //Physics
+const ENGINE_OUTP = 1000000000000000;
+
 const MAX_SPEED = 3;
-const ACCELERATION = 0.05;
 const FRICTION_COEF = 0.4;
 const EARTH_ACCELERATION = 9.8; //m.s^2
+
 
 let objSpeed = 0;
 //=========================================================================
@@ -82,15 +94,31 @@ function setup(shaders) {
 	document.onkeydown = (event) => {
 		switch (event.key) {
 			case 'ArrowUp':
-				objSpeed -= ACCELERATION;
+				if(objSpeed <= MAX_SPEED)
+					objSpeed -= calcAcceleration(ENGINE_OUTP);
 				break;
 			case 'ArrowDown':
-				objSpeed += ACCELERATION;
+				if(objSpeed <= MAX_SPEED)
+					objSpeed += calcAcceleration(ENGINE_OUTP);
 				break;
 			case 'w':
-				mode = gl.LINES; 
+				if(barrelAngle < MAX_ELEVATION)
+					barrelAngle += 2.0;
 				break;
 			case 's':
+				if(barrelAngle > -MIN_DEPRESSION)
+					barrelAngle -= 2.0
+				break;
+			case 'a':
+				turretAngle -= 2.0;
+				break;
+			case 'd':
+				turretAngle += 2.0;
+				break;
+			case 'W':
+				mode = gl.LINES; 
+				break;
+			case 'S':
 				mode = gl.TRIANGLES;
 				break;
 			case 'p':
@@ -159,8 +187,10 @@ function setup(shaders) {
 	function drawTank(posX, posY, posZ) {
 		pushMatrix();
 			multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
-		
-			drawFrame();
+			mTank = modelView();
+			
+			//drawFrame();
+			drawTurret();
 		popMatrix();
 	}
 
@@ -175,8 +205,44 @@ function setup(shaders) {
 		pushMatrix();
 			drawDrivingAxle();
 		popMatrix();
-	
 	}
+
+	function drawTurret() {
+		multTranslation([TANK_LENGTH / 2, 2 ,TANK_WIDTH / 2]);
+		multRotationY(turretAngle);
+
+		pushMatrix();
+			drawTurretHull();
+		popMatrix();
+
+		pushMatrix();
+			drawBarrel();
+		popMatrix();
+
+
+	}
+
+	function drawTurretHull() {
+		multScale([2, 2, 2]);
+
+		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+		uploadModelView();
+
+		SPHERE.draw(gl, program, mode);
+	}
+
+	function drawBarrel() {
+		multRotationZ(90.0 + barrelAngle);
+		multTranslation([0, -2, 0])
+		
+		multScale([0.3, TANK_LENGTH, 0.3]);
+
+		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
+		uploadModelView();
+
+		TORUS.draw(gl, program, mode);
+	}
+
 
 	//=========================================================================
 	//Armour
@@ -282,14 +348,25 @@ function setup(shaders) {
 	}
 
 	//=========================================================================
-	function simulatePhysics() {
-		let f = -Math.sign(objSpeed) * (FRICTION_COEF * EARTH_ACCELERATION); 
+	function simulate() {
+		objSpeed += calcAcceleration();
 
-		let a = f/TANK_MASS;
+		tankPosition[0] += objSpeed; 
+	}
 
-		objSpeed += a;
+	function calcAcceleration(force = 0) {
+		let forces = [force];
 
-		tankPosition[0] += objSpeed;
+		if(objSpeed != 0) {
+			forces.push(-Math.sign(objSpeed) * (FRICTION_COEF * EARTH_ACCELERATION)); 
+		}
+
+		let resultingForce = 0;
+		for(let f in forces) {
+			resultingForce += f;
+		}
+
+		return resultingForce / TANK_MASS;
 	}
 
 	function render() {
@@ -307,7 +384,7 @@ function setup(shaders) {
 		drawTileSet();
 		drawTank(tankPosition[0], tankPosition[1], tankPosition[2]);
 
-		simulatePhysics()
+		simulate();
 	}
 }
 
