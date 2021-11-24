@@ -49,10 +49,10 @@ const MAIN_ARMOR_COLOR = vec3(0.254,0.325,0.231);
 const MAIN_ARMOR_COLOR_2 = vec3(0.154,0.225,0.131);
 
 //Characteristics
-const TANK_LENGTH = 10.0;
+const TANK_LENGTH = 8.0;
 const TANK_MASS = 12000;
 const TANK_WIDTH = 4.0;
-const MIN_DIST = 1.75;
+const MIN_DIST = 1.60;
 
 const WHEEL_RADIUS = 0.7;
 const GROUPS_OF = 2;
@@ -64,6 +64,7 @@ const MAX_ELEVATION = 30.0
 const ENGINE_OUTP = 1000000000000000;
 
 const MAX_SPEED = 3;
+const ACCELERATION = 0.01;
 const FRICTION_COEF = 0.4;
 const EARTH_ACCELERATION = 9.8; //m.s^2
 
@@ -142,7 +143,7 @@ function setup(shaders) {
 				mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
 				break;
 			case '4':
-				mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
+				mView = lookAt(vec3(-1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
 				break;
 		}
 	}
@@ -172,7 +173,7 @@ function setup(shaders) {
 
 		gl.viewport(0, 0, canvas.width, canvas.height);
 
-		mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
+		mView = lookAt(vec3(-1, 1, -1), vec3(0, 0, 0), vec3(0, 1, 0));
 
 		mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
 	}
@@ -192,10 +193,13 @@ function setup(shaders) {
 			//drawFrame();
 			drawTurret();
 		popMatrix();
+
+		pushMatrix();
+			drawArmour();
+		popMatrix();
 	}
 
 	function drawFrame() {
-		
 		//Draws wheels and axles using the grouped method, also possible through individual addition.
 		pushMatrix();
 			drawWheelGroup(0.5);
@@ -248,11 +252,24 @@ function setup(shaders) {
 	//Armour
 
 	function drawArmour() {
-		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+		pushMatrix();
+			multTranslation([5.0, 1.95, 2.0])
+			multScale([TANK_LENGTH, 2.35, TANK_WIDTH])
+
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+
+			uploadModelView();
+
+			CUBE.draw(gl, program, mode);
+		popMatrix();
+
+		pushMatrix();
+
+		popMatrix();
 	}
 
 	function drawDrivingAxle(middleOffset = 0) {
-		multTranslation([TANK_LENGTH / 2, 0, TANK_WIDTH / 2 + middleOffset]);
+		multTranslation([TANK_LENGTH / 2 + 1, 0, TANK_WIDTH / 2 + middleOffset]);
 		multRotationZ(90.0);
 		multScale([0.3, TANK_LENGTH, 0.3])
 
