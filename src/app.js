@@ -190,12 +190,13 @@ function setup(shaders) {
 			multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
 			mTank = modelView();
 			
-			//drawFrame();
-			drawTurret();
-		popMatrix();
+			drawFrame();
 
-		pushMatrix();
-			drawArmour();
+			pushMatrix();
+				drawArmour();
+			popMatrix();
+
+			drawTurret();
 		popMatrix();
 	}
 
@@ -222,8 +223,6 @@ function setup(shaders) {
 		pushMatrix();
 			drawBarrel();
 		popMatrix();
-
-
 	}
 
 	function drawTurretHull() {
