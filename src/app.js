@@ -99,15 +99,15 @@ function setup(shaders) {
 					objSpeed -= calcAcceleration(ENGINE_OUTP);
 				break;
 			case 'ArrowDown':
-				if(objSpeed <= MAX_SPEED)
+				if (objSpeed <= MAX_SPEED)
 					objSpeed += calcAcceleration(ENGINE_OUTP);
 				break;
 			case 'w':
-				if(barrelAngle < MAX_ELEVATION)
+				if (barrelAngle < MAX_ELEVATION)
 					barrelAngle += 2.0;
 				break;
 			case 's':
-				if(barrelAngle > -MIN_DEPRESSION)
+				if (barrelAngle > -MIN_DEPRESSION)
 					barrelAngle -= 2.0
 				break;
 			case 'a':
@@ -143,7 +143,7 @@ function setup(shaders) {
 				mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
 				break;
 			case '4':
-				mView = lookAt(vec3(-1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
+				mView = lookAt(vec3(-1, 1, -1), vec3(0, 0, 0), vec3(0, 1, 0));
 				break;
 		}
 	}
@@ -190,12 +190,12 @@ function setup(shaders) {
 			multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
 			mTank = modelView();
 			
-			//drawFrame();
-			drawTurret();
+			drawFrame();
+			//drawTurret();
+			drawArmour();
 		popMatrix();
 
 		pushMatrix();
-			drawArmour();
 		popMatrix();
 	}
 
@@ -222,8 +222,6 @@ function setup(shaders) {
 		pushMatrix();
 			drawBarrel();
 		popMatrix();
-
-
 	}
 
 	function drawTurretHull() {
