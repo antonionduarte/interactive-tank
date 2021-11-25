@@ -72,11 +72,6 @@ const EARTH_ACCELERATION = 9.8; //m.s^2
 let objSpeed = 0;
 //=========================================================================
 
-
-function eventListeners() {
-
-}
-
 function setup(shaders) {
 	// Setup
 	let canvas = document.getElementById("gl-canvas");
@@ -90,6 +85,9 @@ function setup(shaders) {
 
 	// Event Listener Setup
 	resize_canvas();
+
+	mView = lookAt(vec3(-1, 1, -1), vec3(0, 0, 0), vec3(0, 1, 0));
+
 	window.addEventListener("resize", resize_canvas);
 
 	document.onkeydown = (event) => {
@@ -99,15 +97,15 @@ function setup(shaders) {
 					objSpeed -= calcAcceleration(ENGINE_OUTP);
 				break;
 			case 'ArrowDown':
-				if(objSpeed <= MAX_SPEED)
+				if (objSpeed <= MAX_SPEED)
 					objSpeed += calcAcceleration(ENGINE_OUTP);
 				break;
 			case 'w':
-				if(barrelAngle < MAX_ELEVATION)
+				if (barrelAngle < MAX_ELEVATION)
 					barrelAngle += 2.0;
 				break;
 			case 's':
-				if(barrelAngle > -MIN_DEPRESSION)
+				if (barrelAngle > -MIN_DEPRESSION)
 					barrelAngle -= 2.0
 				break;
 			case 'a':
@@ -143,7 +141,7 @@ function setup(shaders) {
 				mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
 				break;
 			case '4':
-				mView = lookAt(vec3(-1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
+				mView = lookAt(vec3(-1, 1, -1), vec3(0, 0, 0), vec3(0, 1, 0));
 				break;
 		}
 	}
@@ -160,6 +158,7 @@ function setup(shaders) {
 	SPHERE.init(gl);
 	TORUS.init(gl);
 	CYLINDER.init(gl);
+	PYRAMID.init(gl);
 
 	gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
 	
@@ -172,8 +171,6 @@ function setup(shaders) {
 		aspect = canvas.width / canvas.height;
 
 		gl.viewport(0, 0, canvas.width, canvas.height);
-
-		mView = lookAt(vec3(-1, 1, -1), vec3(0, 0, 0), vec3(0, 1, 0));
 
 		mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
 	}
@@ -214,7 +211,7 @@ function setup(shaders) {
 
 	function drawTurret() {
 		multTranslation([TANK_LENGTH / 2, 2 ,TANK_WIDTH / 2]);
-		multRotationY(turretAngle);
+		multRotationY(180.0 + turretAngle);
 
 		pushMatrix();
 			drawTurretHull();
