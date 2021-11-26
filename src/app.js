@@ -110,10 +110,10 @@ function setup(shaders) {
 					barrelAngle -= 2.0
 				break;
 			case 'a':
-				turretAngle -= 2.0;
+				turretAngle += 2.0;
 				break;
 			case 'd':
-				turretAngle += 2.0;
+				turretAngle -= 2.0;
 				break;
 			case 'W':
 				mode = gl.LINES; 
@@ -248,14 +248,28 @@ function setup(shaders) {
 
 	function drawBarrel() {
 		multRotationZ(90.0 + barrelAngle);
-		multTranslation([0, -2, 0])
-		
-		multScale([0.3, TANK_LENGTH + 2.5, 0.3]);
 
-		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
-		uploadModelView();
+		pushMatrix()
+			multTranslation([0, -2, 0])
+			
+			multScale([0.3, TANK_LENGTH + 2.5, 0.3]);
 
-		TORUS.draw(gl, program, mode);
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
+			uploadModelView();
+
+			TORUS.draw(gl, program, mode);
+		popMatrix()
+
+		pushMatrix();
+			multTranslation([0, -4, 0])
+
+			multScale([0.35, 2.5, 0.35]);
+
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+			uploadModelView();
+
+			TORUS.draw(gl, program, mode);
+		popMatrix();
 	}
 
 
@@ -267,6 +281,16 @@ function setup(shaders) {
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
 			drawArmourShape();
 		popMatrix()
+
+		pushMatrix();
+			multTranslation([4.6, 1.70, 2.0])
+			multScale([TANK_LENGTH - 0.4, 1.2, TANK_WIDTH - 0.1])
+
+			uploadModelView();
+
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+			CUBE.draw(gl, program, mode);
+		popMatrix();
 
 		pushMatrix();
 			multTranslation([0.25, 0.1, 0.15])
@@ -289,7 +313,7 @@ function setup(shaders) {
 		popMatrix();
 
 		pushMatrix();
-			multTranslation([4.65, 0.0, TANK_WIDTH / 2])
+			multTranslation([4.65, 0.2, TANK_WIDTH / 2])
 			multScale([1.0, 1.0, TANK_WIDTH])
 			multRotationZ(180)
 
