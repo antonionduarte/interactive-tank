@@ -15,8 +15,6 @@ let gl;
 let mProjection;
 let mView;
 
-let mTank;
-
 let VP_DISTANCE = 10;
 
 /* GLSL */
@@ -61,10 +59,10 @@ const MIN_DEPRESSION = 10.0
 const MAX_ELEVATION = 30.0
 
 //Physics
-const ENGINE_OUTP = 1000000000000000;
+const ENGINE_OUTP = 1000;
 
 const MAX_SPEED = 3;
-const ACCELERATION = 0.01;
+
 const FRICTION_COEF = 0.4;
 const EARTH_ACCELERATION = 9.8; //m.s^2
 
@@ -94,11 +92,11 @@ function setup(shaders) {
 		switch (event.key) {
 			case 'ArrowUp':
 				if(objSpeed <= MAX_SPEED)
-					objSpeed -= calcAcceleration(ENGINE_OUTP);
+					//TODO
 				break;
 			case 'ArrowDown':
 				if (objSpeed <= MAX_SPEED)
-					objSpeed += calcAcceleration(ENGINE_OUTP);
+					//TODO
 				break;
 			case 'w':
 				if (barrelAngle < MAX_ELEVATION)
@@ -185,7 +183,7 @@ function setup(shaders) {
 	function drawTank(posX, posY, posZ) {
 		pushMatrix();
 			multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
-			mTank = modelView();
+			//mTank = modelView();
 			
 			drawFrame();
 
@@ -362,24 +360,11 @@ function setup(shaders) {
 
 	//=========================================================================
 	function simulate() {
-		objSpeed += calcAcceleration();
-
-		tankPosition[0] += objSpeed; 
+		//TODO
 	}
 
-	function calcAcceleration(force = 0) {
-		let forces = [force];
-
-		if(objSpeed != 0) {
-			forces.push(-Math.sign(objSpeed) * (FRICTION_COEF * EARTH_ACCELERATION)); 
-		}
-
-		let resultingForce = 0;
-		for(let f in forces) {
-			resultingForce += f;
-		}
-
-		return resultingForce / TANK_MASS;
+	function calcAcceleration(forces = [0]) {
+		//TODO
 	}
 
 	function render() {
