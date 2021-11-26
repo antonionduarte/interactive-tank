@@ -43,9 +43,9 @@ const edge = 2.0;
 const TILE_COLOR_1 = vec3(0.639, 0.745, 0.549);
 const TILE_COLOR_2 = vec3(0.368, 0.505, 0.674);
 const WHEEL_COLOR = vec3(0.180, 0.203, 0.250);
-const HUBCAP_COLOR = vec3(0.0, 1.0, 0.0);
-const WHEEL_AXLE_COLOR = vec3(1.0, 0.0, 0.0);
-const MAIN_AXLE_COLOR = vec3(0.0, 0.0, 1.0);
+const HUBCAP_COLOR = vec3(0.109, 0.132, 0.179);
+const WHEEL_AXLE_COLOR = vec3(0.148, 0.148, 0.148);
+const MAIN_AXLE_COLOR = vec3(0.148, 0.148, 0.148);
 const MAIN_ARMOR_COLOR = vec3(0.254,0.325,0.231);
 const MAIN_ARMOR_COLOR_2 = vec3(0.154,0.225,0.131);
 
@@ -58,7 +58,7 @@ const MIN_DIST = 1.45;
 const WHEEL_RADIUS = 0.7;
 const GROUPS_OF = 2;
 
-const MIN_DEPRESSION = 10.0
+const MIN_DEPRESSION = 0.0
 const MAX_ELEVATION = 30.0
 
 //Physics
@@ -186,9 +186,9 @@ function setup(shaders) {
 	
 	function drawTank(posX, posY, posZ) {
 		pushMatrix();
-			//multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
+			// multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
 			multTranslation([0.0, WHEEL_RADIUS, 0.0])
-			//mTank = modelView();
+			// mTank = modelView();
 			
 			drawFrame();
 
@@ -201,7 +201,7 @@ function setup(shaders) {
 	}
 
 	function drawFrame() {
-		//Draws wheels and axles using the grouped method, also possible through individual addition.
+		// Draws wheels and axles using the grouped method, also possible through individual addition.
 		pushMatrix();
 			drawWheelGroup(0.5);
 			drawWheelGroup(1);
@@ -213,12 +213,12 @@ function setup(shaders) {
 	}
 
 	function drawTurret() {
-		multTranslation([TANK_LENGTH / 2, 2.60, TANK_WIDTH / 2]);
+		multTranslation([TANK_LENGTH / 2, 2.50, TANK_WIDTH / 2]);
 		multRotationY(180.0 + turretAngle);
 
 		pushMatrix();
 			multTranslation([0.0, -0.5, 0.0])
-			multScale([2.75, 1.0, 2.75]);
+			multScale([3.25, 1.0, 2.75]);
 
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
 			uploadModelView();
@@ -236,6 +236,8 @@ function setup(shaders) {
 	}
 
 	function drawTurretHull() {
+		multTranslation([0.0, 0.0, 0.0])
+		multRotationZ(barrelAngle);
 		multScale([2, 2, 2]);
 
 		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
@@ -248,7 +250,7 @@ function setup(shaders) {
 		multRotationZ(90.0 + barrelAngle);
 		multTranslation([0, -2, 0])
 		
-		multScale([0.3, TANK_LENGTH, 0.3]);
+		multScale([0.3, TANK_LENGTH + 2.5, 0.3]);
 
 		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
 		uploadModelView();
@@ -261,18 +263,30 @@ function setup(shaders) {
 	// Armour
 
 	function drawArmour() {
-		pushMatrix();
-			multTranslation([4.6, 1.25, 2.0])
-			multScale([TANK_LENGTH - 0.8, 2.0, TANK_WIDTH])
-
+		pushMatrix()
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+			drawArmourShape();
+		popMatrix()
 
+		pushMatrix();
+			multTranslation([0.25, 0.1, 0.15])
+			multScale([0.95, 0.90, 1.0])
 			uploadModelView();
 
-			CUBE.draw(gl, program, mode);
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+
+			drawArmourShape();
 		popMatrix();
 
-		// the prism between the wheels
+		pushMatrix();
+			multTranslation([0.25, 0.1, -0.15])
+			multScale([0.95, 0.90, 1.0])
+			uploadModelView();
+
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+
+			drawArmourShape();
+		popMatrix();
 
 		pushMatrix();
 			multTranslation([4.65, 0.0, TANK_WIDTH / 2])
@@ -285,8 +299,17 @@ function setup(shaders) {
 
 			PRISM.draw(gl, program, mode);
 		popMatrix();
+	}
 
-		// the two squares on the sides
+	function drawArmourShape() {
+		pushMatrix();
+			multTranslation([4.6, 1.25, 2.0])
+			multScale([TANK_LENGTH - 0.8, 2.0, TANK_WIDTH])
+
+			uploadModelView();
+
+			CUBE.draw(gl, program, mode);
+		popMatrix();
 
 		pushMatrix();
 			multTranslation([1.0, 1.25, 2.0]);
@@ -350,6 +373,7 @@ function setup(shaders) {
 
 	function drawWheel() {
 		multRotationX(90.0);
+		multScale([1.0, 1.8, 1.0])
 		
 		//===================
 		uploadModelView();
@@ -377,16 +401,6 @@ function setup(shaders) {
 		CYLINDER.draw(gl, program, mode);
 	}
 
-	function drawPrism() {
-		multTranslation([3.0, 3.0, 4.0]);
-		multRotationZ(10);
-		
-		uploadModelView();
-		gl.uniform3fv(uColor, flatten(vec3(1.0, 0.0, 0.0)))
-
-		PRISM.draw(gl, program, mode);
-	}
-
 	//=========================================================================
 	// Tileset Drawing
 
@@ -412,7 +426,7 @@ function setup(shaders) {
 					drawTile(i, -0.05, j);
 				popMatrix();
 			}
-		}	
+		}
 	}
 
 	//=========================================================================
@@ -450,7 +464,6 @@ function setup(shaders) {
 		loadMatrix(mView);
 
 		drawTileSet();
-		//drawPrism();
 		
 		drawTank(tankPosition[0], tankPosition[1], tankPosition[2]);
 
