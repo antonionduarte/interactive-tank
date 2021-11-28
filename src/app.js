@@ -1,5 +1,5 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
-import { ortho, lookAt, flatten, vec3 } from "../libs/MV.js";
+import { ortho, lookAt, flatten, vec3, rotateX } from "../libs/MV.js";
 import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation, multRotationX, multRotationZ } from "../libs/stack.js";
 
 import * as SPHERE from '../libs/sphere.js';
@@ -7,6 +7,7 @@ import * as CUBE from '../libs/cube.js';
 import * as TORUS from '../libs/torus.js';
 import * as CYLINDER from '../libs/cylinder.js';
 import * as PYRAMID from '../libs/pyramid.js';
+import * as PRISM from '../libs/triangular_prism.js';
 
 /** @type WebGLRenderingContext */
 let gl;
@@ -40,9 +41,9 @@ const edge = 2.0;
 const TILE_COLOR_1 = vec3(0.639, 0.745, 0.549);
 const TILE_COLOR_2 = vec3(0.368, 0.505, 0.674);
 const WHEEL_COLOR = vec3(0.180, 0.203, 0.250);
-const HUBCAP_COLOR = vec3(0.0, 1.0, 0.0);
-const WHEEL_AXLE_COLOR = vec3(1.0, 0.0, 0.0);
-const MAIN_AXLE_COLOR = vec3(0.0, 0.0, 1.0);
+const HUBCAP_COLOR = vec3(0.109, 0.132, 0.179);
+const WHEEL_AXLE_COLOR = vec3(0.148, 0.148, 0.148);
+const MAIN_AXLE_COLOR = vec3(0.148, 0.148, 0.148);
 const MAIN_ARMOR_COLOR = vec3(0.254,0.325,0.231);
 const MAIN_ARMOR_COLOR_2 = vec3(0.154,0.225,0.131);
 
@@ -50,13 +51,15 @@ const MAIN_ARMOR_COLOR_2 = vec3(0.154,0.225,0.131);
 const TANK_LENGTH = 8.0;
 const TANK_MASS = 12000;
 const TANK_WIDTH = 4.0;
-const MIN_DIST = 1.60;
+const MIN_DIST = 1.45;
 
 const WHEEL_RADIUS = 0.7;
 const GROUPS_OF = 2;
 
-const MIN_DEPRESSION = 10.0
+const MIN_DEPRESSION = 0.0
 const MAX_ELEVATION = 30.0
+
+// Shell characteristics
 
 //Physics
 const ENGINE_OUTP = 1000;
@@ -84,7 +87,7 @@ function setup(shaders) {
 	// Event Listener Setup
 	resize_canvas();
 
-	mView = lookAt(vec3(-1, 1, -1), vec3(0, 0, 0), vec3(0, 1, 0));
+	mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
 
 	window.addEventListener("resize", resize_canvas);
 
@@ -107,10 +110,10 @@ function setup(shaders) {
 					barrelAngle -= 2.0
 				break;
 			case 'a':
-				turretAngle -= 2.0;
+				turretAngle += 2.0;
 				break;
 			case 'd':
-				turretAngle += 2.0;
+				turretAngle -= 2.0;
 				break;
 			case 'W':
 				mode = gl.LINES; 
@@ -139,7 +142,7 @@ function setup(shaders) {
 				mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
 				break;
 			case '4':
-				mView = lookAt(vec3(-1, 1, -1), vec3(0, 0, 0), vec3(0, 1, 0));
+				mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
 				break;
 		}
 	}
@@ -157,6 +160,7 @@ function setup(shaders) {
 	TORUS.init(gl);
 	CYLINDER.init(gl);
 	PYRAMID.init(gl);
+	PRISM.init(gl);
 
 	gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
 	
@@ -182,21 +186,23 @@ function setup(shaders) {
 	
 	function drawTank(posX, posY, posZ) {
 		pushMatrix();
-			multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
+			//multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
 			//mTank = modelView();
 			
-			drawFrame();
+			//drawFrame();
 
+			// pushMatrix();
+				// drawArmour();
+			//popMatrix();
 			pushMatrix();
-				drawArmour();
+				drawShell();
 			popMatrix();
-
-			drawTurret();
+			//drawTurret();
 		popMatrix();
 	}
 
 	function drawFrame() {
-		//Draws wheels and axles using the grouped method, also possible through individual addition.
+		// Draws wheels and axles using the grouped method, also possible through individual addition.
 		pushMatrix();
 			drawWheelGroup(0.5);
 			drawWheelGroup(1);
@@ -208,8 +214,18 @@ function setup(shaders) {
 	}
 
 	function drawTurret() {
-		multTranslation([TANK_LENGTH / 2, 2 ,TANK_WIDTH / 2]);
+		multTranslation([TANK_LENGTH / 2, 2.50, TANK_WIDTH / 2]);
 		multRotationY(180.0 + turretAngle);
+
+		pushMatrix();
+			multTranslation([0.0, -0.5, 0.0])
+			multScale([3.25, 1.0, 2.75]);
+
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+			uploadModelView();
+
+			CYLINDER.draw(gl, program, mode);
+		popMatrix();
 
 		pushMatrix();
 			drawTurretHull();
@@ -221,6 +237,8 @@ function setup(shaders) {
 	}
 
 	function drawTurretHull() {
+		multTranslation([0.0, 0.0, 0.0])
+		multRotationZ(barrelAngle);
 		multScale([2, 2, 2]);
 
 		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
@@ -231,26 +249,87 @@ function setup(shaders) {
 
 	function drawBarrel() {
 		multRotationZ(90.0 + barrelAngle);
-		multTranslation([0, -2, 0])
-		
-		multScale([0.3, TANK_LENGTH, 0.3]);
 
-		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
-		uploadModelView();
+		pushMatrix()
+			multTranslation([0, -2, 0])
+			
+			multScale([0.3, TANK_LENGTH + 2.5, 0.3]);
 
-		TORUS.draw(gl, program, mode);
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
+			uploadModelView();
+
+			TORUS.draw(gl, program, mode);
+		popMatrix()
+
+		pushMatrix();
+			multTranslation([0, -4, 0])
+
+			multScale([0.35, 2.5, 0.35]);
+
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+			uploadModelView();
+
+			TORUS.draw(gl, program, mode);
+		popMatrix();
 	}
 
 
 	//=========================================================================
-	//Armour
+	// Armour
 
 	function drawArmour() {
-		pushMatrix();
-			multTranslation([5.0, 1.95, 2.0])
-			multScale([TANK_LENGTH, 2.35, TANK_WIDTH])
-
+		pushMatrix()
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+			drawArmourShape();
+		popMatrix()
+
+		pushMatrix();
+			multTranslation([4.6, 1.70, 2.0])
+			multScale([TANK_LENGTH - 0.4, 1.2, TANK_WIDTH - 0.1])
+
+			uploadModelView();
+
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+			CUBE.draw(gl, program, mode);
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([0.25, 0.1, 0.15])
+			multScale([0.95, 0.90, 1.0])
+			uploadModelView();
+
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+
+			drawArmourShape();
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([0.25, 0.1, -0.15])
+			multScale([0.95, 0.90, 1.0])
+			uploadModelView();
+
+			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
+
+			drawArmourShape();
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([4.65, 0.2, TANK_WIDTH / 2])
+			multScale([1.0, 1.0, TANK_WIDTH])
+			multRotationZ(180)
+
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR));
+			
+			uploadModelView();
+
+			PRISM.draw(gl, program, mode);
+		popMatrix();
+	}
+
+	function drawArmourShape() {
+		pushMatrix();
+			multTranslation([4.6, 1.25, 2.0])
+			multScale([TANK_LENGTH - 0.8, 2.0, TANK_WIDTH])
 
 			uploadModelView();
 
@@ -258,14 +337,30 @@ function setup(shaders) {
 		popMatrix();
 
 		pushMatrix();
+			multTranslation([1.0, 1.25, 2.0]);
+			multRotationZ(45);
+			multScale([Math.sqrt(2), Math.sqrt(2), TANK_WIDTH])
 
+			uploadModelView();
+
+			CUBE.draw(gl, program, mode);
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([8.2, 1.25, 2.0]);
+			multRotationZ(45);
+			multScale([Math.sqrt(2), Math.sqrt(2), TANK_WIDTH])
+
+			uploadModelView();
+
+			CUBE.draw(gl, program, mode);
 		popMatrix();
 	}
 
 	function drawDrivingAxle(middleOffset = 0) {
-		multTranslation([TANK_LENGTH / 2 + 1, 0, TANK_WIDTH / 2 + middleOffset]);
+		multTranslation([TANK_LENGTH / 2 + 0.6, 0, TANK_WIDTH / 2 + middleOffset]);
 		multRotationZ(90.0);
-		multScale([0.3, TANK_LENGTH, 0.3])
+		multScale([0.3, TANK_LENGTH - 0.8, 0.3])
 
 		gl.uniform3fv(uColor, flatten(MAIN_AXLE_COLOR));
 		uploadModelView();
@@ -274,7 +369,7 @@ function setup(shaders) {
 	}
 
 	//=========================================================================
-	//Wheel drawing
+	// Wheel drawing
 
 	function drawWheelGroup(dist) {
 		multTranslation([dist, 0, 0]);
@@ -303,6 +398,7 @@ function setup(shaders) {
 
 	function drawWheel() {
 		multRotationX(90.0);
+		multScale([1.0, 1.8, 1.0])
 		
 		//===================
 		uploadModelView();
@@ -331,6 +427,23 @@ function setup(shaders) {
 	}
 
 	//=========================================================================
+	let pos = vec3(0,0,0);
+	let vec;
+	const SPEED = 10.0 / 6000;
+	function drawShell() {
+		multRotationY(turretAngle);
+		multTranslation(pos);
+		
+		pos = [pos[0] + 0.01, pos[1], pos[2]];
+
+		multScale([0.3, 0.3, 0.3]);
+		gl.uniform3fv(uColor, flatten(vec3(1.0, 1.0, 0.0)));
+		uploadModelView();
+
+		SPHERE.draw(gl, program, mode);
+	}
+
+	//=========================================================================
 	// Tileset Drawing
 
 	function drawTile(posX, posY, posZ) {
@@ -355,7 +468,7 @@ function setup(shaders) {
 					drawTile(i, -0.05, j);
 				popMatrix();
 			}
-		}	
+		}
 	}
 
 	//=========================================================================
@@ -380,6 +493,7 @@ function setup(shaders) {
 		loadMatrix(mView);
 
 		drawTileSet();
+		
 		drawTank(tankPosition[0], tankPosition[1], tankPosition[2]);
 
 		simulate();
