@@ -616,16 +616,16 @@ function setup(shaders) {
 		shells.push(aux);
 	}
 
-	function drawShell(pos) {
-		multTranslation(pos);
+	function drawShell(pos, vertSpeed) {
+		multTranslation(pos);	
+		multRotationZ(90 + barrelAngle - vertSpeed);
+		multRotationX(turretAngle + 180);
 
-		multScale([0.2, 0.2, 0.2]);
+		multScale([0.2, 0.4, 0.2]);
 
 		gl.uniform3fv(uColor, flatten(vec3(1.0, 1.0, 0.0)));
-
 		uploadModelView();
-
-		SPHERE.draw(gl, program, mode);
+		PYRAMID.draw(gl, program, mode);
 	}
 
 	//=========================================================================
@@ -650,7 +650,7 @@ function setup(shaders) {
 				rem.push(i);
 
 			pushMatrix();
-				drawShell(position)
+				drawShell(position, shellSpeed[1])
 			popMatrix();
 
 			for (const j in position) {
