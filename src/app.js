@@ -260,9 +260,15 @@ function setup(shaders) {
 	}
 
 	function drawTurretHull() {
-		multScale([2, 2, 2]);
+		multScale([2, 1, 2]);
 
 		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+		uploadModelView();
+
+		CYLINDER.draw(gl, program, mode);
+
+		multTranslation([0.0, 0.3, 0.0])
+		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
 		uploadModelView();
 
 		SPHERE.draw(gl, program, mode);
