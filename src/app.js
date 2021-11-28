@@ -101,7 +101,7 @@ function setup(shaders) {
 	// Event Listener Setup
 	resize_canvas();
 
-	mView = lookAt(vec3(0,1,0), vec3(0,-1,0), vec3(-1,0,0));  
+	mView = lookAt(vec3(1, 1, 1), vec3(0, 0, 0), vec3(0, 1, 0));
 
 	window.addEventListener("resize", resize_canvas);
 
@@ -373,7 +373,7 @@ function setup(shaders) {
 	}
 
 	function drawSkirts() {
-		//Skirts
+		// Skirts
 		pushMatrix();
 			multTranslation([0.0, 1.36, 0.25])
 
@@ -437,7 +437,7 @@ function setup(shaders) {
 	function drawFront() {
 		// Front
 		pushMatrix();
-			multTranslation([TANK_LENGTH/2 + 0.5, TANK_HEIGHT/2 - 0.15, TANK_WIDTH/2]);
+			multTranslation([TANK_LENGTH / 2 + 0.5, TANK_HEIGHT / 2 - 0.15, TANK_WIDTH / 2]);
 
 			pushMatrix();
 				multTranslation([-0.15, 0.48, -0.9]);
