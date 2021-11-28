@@ -67,7 +67,10 @@ const MIN_DIST = 1.45;
 const TURRET_ROT_SPEED = 2.0;
 const BARREL_ELV_SPEED = 2.0;
 const MIN_DEPRESSION = 0.0;
-const MAX_ELEVATION = 45.0;
+const MAX_ELEVATION = 18.0;
+
+const BODY_LENGTH = TANK_LENGTH - 0.5;
+const BODY_WIDTH = TANK_WIDTH - 0.8;
 
 // Shell characteristics
 
@@ -237,18 +240,45 @@ function setup(shaders) {
 	//=========================================================================
 	function drawTurret() {
 		multTranslation([TANK_LENGTH / 2 + 2, TANK_HEIGHT, TANK_WIDTH / 2]);
-		multRotationY(turretAngle);
 		multScale([0.9, 0.9, 0.9])
 
 		pushMatrix();
 			multTranslation([0.0, -0.2, 0.0])
-			multScale([2.7, 0.1, 2.7]);
 
-			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
-			uploadModelView();
+			pushMatrix();
+				multScale([2.7, 0.1, 2.7]);
 
-			CYLINDER.draw(gl, program, mode);
+				gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
+				uploadModelView();
+
+				CYLINDER.draw(gl, program, mode);
+			popMatrix();
+
+			//
+			multTranslation([-BODY_LENGTH/2, 0.0, 0.0]);
+
+			pushMatrix();
+				multTranslation([0.0, 0.0, 0.8])
+				multScale([3, 0.1, 1.4]);
+
+				gl.uniform3fv(uColor, flatten(vec3(0.25, 0.25, 0.25)))
+				uploadModelView();
+
+				CUBE.draw(gl, program, mode);
+			popMatrix();
+
+			pushMatrix();
+				multTranslation([0.0, 0.0, -0.8])
+				multScale([3, 0.1, 1.4]);
+
+				gl.uniform3fv(uColor, flatten(vec3(0.25, 0.25, 0.25)))
+				uploadModelView();
+
+				CUBE.draw(gl, program, mode);
+			popMatrix();
 		popMatrix();
+
+		multRotationY(turretAngle);
 
 		pushMatrix();
 			drawTurretHull();
@@ -307,10 +337,6 @@ function setup(shaders) {
 
 	//=========================================================================
 	// Armour
-
-	const BODY_LENGTH = TANK_LENGTH - 0.5;
-	const BODY_WIDTH = TANK_WIDTH - 0.8;
-	
 	function drawArmour() {
 		multTranslation([TANK_LENGTH/2 + 0.5, 0.0, 0.0]);
 
