@@ -37,7 +37,7 @@ let barrelAngle = 0.0;
 
 // Shell metrics
 let shells = []; // Array of vec3 tuples, (position, speed).
-const SHELL_SPEED = 20.0 * speed;
+const SHELL_SPEED = 30.0 * speed;
 
 /* Shader Programs */
 let program;
@@ -55,15 +55,19 @@ const MAIN_ARMOR_COLOR = vec3(0.254,0.325,0.231);
 const MAIN_ARMOR_COLOR_2 = vec3(0.154,0.225,0.131);
 
 //Characteristics
+const TANK_HEIGHT = 2.0;
 const TANK_LENGTH = 8.0;
 const TANK_WIDTH = 4.0;
-const MIN_DIST = 1.45;
+const BODY_CLEARANCE = 0.85;
 
 const WHEEL_RADIUS = 0.7;
 const GROUPS_OF = 2;
+const MIN_DIST = 1.45;
 
-const MIN_DEPRESSION = 0.0
-const MAX_ELEVATION = 30.0
+const TURRET_ROT_SPEED = 2.0;
+const BARREL_ELV_SPEED = 2.0;
+const MIN_DEPRESSION = 0.0;
+const MAX_ELEVATION = 45.0;
 
 // Shell characteristics
 
@@ -94,7 +98,7 @@ function setup(shaders) {
 	// Event Listener Setup
 	resize_canvas();
 
-	mView = lookAt(vec3(0, 0, 1), vec3(0, 0, -1), vec3(0, 1, 0));
+	mView = lookAt(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(0, 1, 0));
 
 	window.addEventListener("resize", resize_canvas);
 
@@ -110,17 +114,17 @@ function setup(shaders) {
 				break;
 			case 'w':
 				if (barrelAngle < MAX_ELEVATION)
-					barrelAngle += 2.0;
+					barrelAngle += TURRET_ROT_SPEED;
 				break;
 			case 's':
 				if (barrelAngle > -MIN_DEPRESSION)
-					barrelAngle -= 2.0
+					barrelAngle -= TURRET_ROT_SPEED;
 				break;
 			case 'a':
-				turretAngle += 2.0;
+				turretAngle += BARREL_ELV_SPEED;
 				break;
 			case 'd':
-				turretAngle -= 2.0;
+				turretAngle -= BARREL_ELV_SPEED;
 				break;
 			case 'W':
 				mode = gl.LINES; 
@@ -162,6 +166,7 @@ function setup(shaders) {
 				break;
 		}
 	}
+		
 
 	// Attrib Locations
 			
@@ -228,9 +233,12 @@ function setup(shaders) {
 		popMatrix();
 	}
 
+
+	//=========================================================================
 	function drawTurret() {
 		multTranslation([TANK_LENGTH / 2, 2.50, TANK_WIDTH / 2]);
 		multRotationY(turretAngle);
+		multScale([0.75, 0.75, 0.75])
 
 		pushMatrix();
 			multTranslation([0.0, -0.5, 0.0])
@@ -294,15 +302,15 @@ function setup(shaders) {
 	//=========================================================================
 	// Armour
 
+	const BODY_LENGTH = TANK_LENGTH - 0.5;
+	const BODY_WIDTH = TANK_WIDTH - 0.8;
+	
 	function drawArmour() {
-		pushMatrix()
-			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
-			drawArmourShape();
-		popMatrix()
+		multTranslation([TANK_LENGTH/2 + 0.5, 0.0, 0.0]);
 
 		pushMatrix();
-			multTranslation([4.6, 1.70, 2.0])
-			multScale([TANK_LENGTH - 0.4, 1.2, TANK_WIDTH - 0.1])
+			multTranslation([0.0, BODY_CLEARANCE, 2.0])
+			multScale([BODY_LENGTH, TANK_HEIGHT, BODY_WIDTH])
 
 			uploadModelView();
 
@@ -310,30 +318,113 @@ function setup(shaders) {
 			CUBE.draw(gl, program, mode);
 		popMatrix();
 
+		//Skirts
 		pushMatrix();
-			multTranslation([0.25, 0.1, 0.15])
-			multScale([0.95, 0.90, 1.0])
+			multTranslation([0.0, 1.36, 0.25])
+
+			multRotationY(90.0);
+			multRotationZ(17.0);
+			
+			multScale([1.0, 1.0, BODY_LENGTH])
+
 			uploadModelView();
 
-			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
-
-			drawArmourShape();
+			
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
+			PRISM.draw(gl, program, mode);
 		popMatrix();
 
 		pushMatrix();
-			multTranslation([0.25, 0.1, -0.15])
-			multScale([0.95, 0.90, 1.0])
+			multTranslation([0.0, 1.36, 3.75]);
+
+			multRotationY(90.0);
+			multRotationZ(-17)
+
+			multScale([1.0, 1.0,BODY_LENGTH])
+			
 			uploadModelView();
 
-			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
-
-			drawArmourShape();
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
+			PRISM.draw(gl, program, mode);
 		popMatrix();
 
+		//Undecarriage
 		pushMatrix();
-			multTranslation([4.65, 0.2, TANK_WIDTH / 2])
-			multScale([1.0, 1.0, TANK_WIDTH])
+			multTranslation([0, 0.4, TANK_WIDTH / 2])
+			multScale([1.5, 1.0, TANK_WIDTH])
 			multRotationZ(180)
+
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR));
+			
+			uploadModelView();
+
+			PRISM.draw(gl, program, mode);
+		popMatrix();
+
+		//Frontal skirts
+		pushMatrix();
+			multTranslation([TANK_LENGTH/2 - 0.3, TANK_HEIGHT/2, BODY_WIDTH + 0.32])
+		
+			multRotationX(47);
+			multRotationZ(45);
+
+			multScale([1, 0.9, 1.1])
+
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2));
+			
+			uploadModelView();
+
+			CUBE.draw(gl, program, mode);
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([TANK_LENGTH/2 - 0.3, TANK_HEIGHT/2 , 0.49])
+			
+			multRotationX(-47);
+			multRotationZ(45);
+
+			multScale([1, 0.9, 1.1])
+
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2));
+			uploadModelView();
+			CUBE.draw(gl, program, mode);
+		popMatrix();
+
+		
+		pushMatrix();
+			multTranslation([TANK_LENGTH/2 + 0.5, TANK_HEIGHT/2 - 0.15, TANK_WIDTH/2]);
+
+			pushMatrix();
+				multTranslation([-0.15, 0.48, -0.9]);
+
+				pushMatrix();
+					multTranslation([0.2, 0.13, 0.0]);
+
+					multRotationZ(45)
+
+					multScale([0.05, 0.27, 0.8])
+					gl.uniform3fv(uColor, flatten(vec3(0.0, 0.0, 0.3)));
+					uploadModelView();
+					CUBE.draw(gl, program, mode);
+				popMatrix();
+
+				pushMatrix();
+					multTranslation([0.3,0.1,1.5]);
+					multRotationZ(-40.0);
+					drawStaticWheel();
+				popMatrix();
+
+				multRotationZ(120)
+
+				multScale([0.5, 0.5, 1.0])
+
+				gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2));
+				uploadModelView();
+				PRISM.draw(gl, program, mode);
+			popMatrix();
+
+			multScale([1.5, TANK_HEIGHT, BODY_WIDTH])
+			multRotationZ(270.0)
 
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR));
 			
@@ -343,36 +434,6 @@ function setup(shaders) {
 		popMatrix();
 	}
 
-	function drawArmourShape() {
-		pushMatrix();
-			multTranslation([4.6, 1.25, 2.0])
-			multScale([TANK_LENGTH - 0.8, 2.0, TANK_WIDTH])
-
-			uploadModelView();
-
-			CUBE.draw(gl, program, mode);
-		popMatrix();
-
-		pushMatrix();
-			multTranslation([1.0, 1.25, 2.0]);
-			multRotationZ(45);
-			multScale([Math.sqrt(2), Math.sqrt(2), TANK_WIDTH])
-
-			uploadModelView();
-
-			CUBE.draw(gl, program, mode);
-		popMatrix();
-
-		pushMatrix();
-			multTranslation([8.2, 1.25, 2.0]);
-			multRotationZ(45);
-			multScale([Math.sqrt(2), Math.sqrt(2), TANK_WIDTH])
-
-			uploadModelView();
-
-			CUBE.draw(gl, program, mode);
-		popMatrix();
-	}
 
 	function drawDrivingAxle(middleOffset = 0) {
 		multTranslation([TANK_LENGTH / 2 + 0.6, 0, TANK_WIDTH / 2 + middleOffset]);
@@ -419,7 +480,10 @@ function setup(shaders) {
 	function drawWheel() {
 		multRotationX(90.0);
 		multRotationY(wheelAngle);
-		
+		drawStaticWheel();
+	}
+
+	function drawStaticWheel() {
 		multScale([1.0, 1.8, 1.0])
 		
 		//===================
@@ -429,7 +493,7 @@ function setup(shaders) {
 		TORUS.draw(gl, program, mode);
 		
 		//===================
-		multScale([0.5, 0.3, 0.5]);
+		multScale([0.7, 0.3, 0.7]);
 		uploadModelView();
 		gl.uniform3fv(uColor, flatten(HUBCAP_COLOR))
 
@@ -522,7 +586,6 @@ function setup(shaders) {
 
 		tankSpeed *= FRICTION_COEF;
 
-		
 		simulateShells();
 	}
 
@@ -545,12 +608,12 @@ function setup(shaders) {
 			}
 
 			shells[i].position = position;
-			shells[i].speed[1] -= EARTH_ACCELERATION * 1/6000;
+			shells[i].speed[1] -= EARTH_ACCELERATION * 1/600;
 		}
 
 		for(const i in rem)
 			shells.splice(i,1);
-	}
+	}6
 
 	//=========================================================================
 
