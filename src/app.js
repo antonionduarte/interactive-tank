@@ -98,7 +98,7 @@ function setup(shaders) {
 	// Event Listener Setup
 	resize_canvas();
 
-	mView = lookAt(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(0, 1, 0));
+	mView = lookAt(vec3(0,1,0), vec3(0,-1,0), vec3(-1,0,0));  
 
 	window.addEventListener("resize", resize_canvas);
 
@@ -315,15 +315,38 @@ function setup(shaders) {
 		multTranslation([TANK_LENGTH/2 + 0.5, 0.0, 0.0]);
 
 		pushMatrix();
-			multTranslation([0.0, BODY_CLEARANCE, 2.0])
+			drawMainBody();
+		popMatrix();
+
+		drawSkirts();
+
+		//Undecarriage
+		pushMatrix();
+			multTranslation([0, 0.4, TANK_WIDTH / 2])
+			multScale([1.5, 1.0, TANK_WIDTH])
+			multRotationZ(180)
+
+			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR));
+			
+			uploadModelView();
+
+			PRISM.draw(gl, program, mode);
+		popMatrix();
+
+		drawFront();
+	}
+
+	function drawMainBody() {
+		multTranslation([0.0, BODY_CLEARANCE, 2.0])
 			multScale([BODY_LENGTH, TANK_HEIGHT, BODY_WIDTH])
 
 			uploadModelView();
 
 			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
 			CUBE.draw(gl, program, mode);
-		popMatrix();
+	}
 
+	function drawSkirts() {
 		//Skirts
 		pushMatrix();
 			multTranslation([0.0, 1.36, 0.25])
@@ -351,19 +374,6 @@ function setup(shaders) {
 			uploadModelView();
 
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
-			PRISM.draw(gl, program, mode);
-		popMatrix();
-
-		//Undecarriage
-		pushMatrix();
-			multTranslation([0, 0.4, TANK_WIDTH / 2])
-			multScale([1.5, 1.0, TANK_WIDTH])
-			multRotationZ(180)
-
-			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR));
-			
-			uploadModelView();
-
 			PRISM.draw(gl, program, mode);
 		popMatrix();
 
@@ -395,38 +405,18 @@ function setup(shaders) {
 			uploadModelView();
 			CUBE.draw(gl, program, mode);
 		popMatrix();
+	}
 
-		
+
+	function drawFront() {
+		// Front
 		pushMatrix();
 			multTranslation([TANK_LENGTH/2 + 0.5, TANK_HEIGHT/2 - 0.15, TANK_WIDTH/2]);
 
 			pushMatrix();
 				multTranslation([-0.15, 0.48, -0.9]);
 
-				pushMatrix();
-					multTranslation([0.2, 0.13, 0.0]);
-
-					multRotationZ(45)
-
-					multScale([0.05, 0.27, 0.8])
-					gl.uniform3fv(uColor, flatten(vec3(0.0, 0.0, 0.3)));
-					uploadModelView();
-					CUBE.draw(gl, program, mode);
-				popMatrix();
-
-				pushMatrix();
-					multTranslation([0.3,0.1,1.5]);
-					multRotationZ(-40.0);
-					drawStaticWheel();
-				popMatrix();
-
-				multRotationZ(120)
-
-				multScale([0.5, 0.5, 1.0])
-
-				gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2));
-				uploadModelView();
-				PRISM.draw(gl, program, mode);
+				drawViewHole();
 			popMatrix();
 
 			multScale([1.5, TANK_HEIGHT, BODY_WIDTH])
@@ -438,6 +428,35 @@ function setup(shaders) {
 
 			PRISM.draw(gl, program, mode);
 		popMatrix();
+	}
+
+	function drawViewHole() {
+		pushMatrix();
+			multTranslation([0.2, 0.13, 0.0]);
+
+			multRotationZ(45)
+
+			multScale([0.05, 0.27, 0.8])
+
+			gl.uniform3fv(uColor, flatten(vec3(0.0, 0.0, 0.3)));
+
+			uploadModelView();
+			CUBE.draw(gl, program, mode);
+		popMatrix();
+
+		pushMatrix();
+			multTranslation([0.3,0.1,1.5]);
+			multRotationZ(-40.0);
+			drawStaticWheel();
+		popMatrix();
+
+		multRotationZ(120)
+
+		multScale([0.5, 0.5, 1.0])
+
+		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2));
+		uploadModelView();
+		PRISM.draw(gl, program, mode);
 	}
 
 
