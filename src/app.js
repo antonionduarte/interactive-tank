@@ -16,6 +16,7 @@ let gl;
 let mProjection;
 let mView;
 
+let mWheels;
 let mBarrel;
 
 let VP_DISTANCE = 10;
@@ -67,8 +68,8 @@ const MAX_ELEVATION = 30.0
 // Shell characteristics
 
 //Physics
-const TANK_ACCELERATION = 0.25;
-const MAX_SPEED = 3;
+const TANK_ACCELERATION = 0.01;
+const MAX_SPEED = 2;
 
 const FRICTION_COEF = 0.95;
 const EARTH_ACCELERATION = 9.8; //m.s^2
@@ -101,11 +102,11 @@ function setup(shaders) {
 		switch (event.key) {
 			case 'ArrowUp':
 				if(tankSpeed <= MAX_SPEED)
-					tankSpeed += TANK_ACCELERATION;
+					tankSpeed += TANK_ACCELERATION+(tankSpeed*0.1);
 				break;
 			case 'ArrowDown':
 				if (Math.abs(tankSpeed) <= MAX_SPEED)
-					tankSpeed -= TANK_ACCELERATION;
+					tankSpeed -= TANK_ACCELERATION+(tankSpeed*0.05);
 				break;
 			case 'w':
 				if (barrelAngle < MAX_ELEVATION)
@@ -144,6 +145,8 @@ function setup(shaders) {
 			case 'Backspace':
 				tankPosition[0] = 0;
 				tankSpeed = 0;
+				turretAngle = 0;
+				barrelAngle = 0;
 				break;
 			case '1':
 				mView = lookAt(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(0, 1, 0));
@@ -385,8 +388,11 @@ function setup(shaders) {
 	//=========================================================================
 	// Wheel drawing
 
+	let wheelAngle = 0;
 	function drawWheelGroup(dist) {
 		multTranslation([dist, 0, 0]);
+
+		wheelAngle += -(tankSpeed/(WHEEL_RADIUS * 2 * Math.PI)) * 360
 
 		for (let x = 0; x < GROUPS_OF; x++) {
 			drawWheelSet(MIN_DIST)
@@ -395,7 +401,7 @@ function setup(shaders) {
 
 	function drawWheelSet(dist) {
 		multTranslation([dist, 0, 0]);
-
+		
 		pushMatrix();
 			drawWheel();
 		popMatrix();
@@ -412,8 +418,9 @@ function setup(shaders) {
 
 	function drawWheel() {
 		multRotationX(90.0);
+		multRotationY(wheelAngle);
+		
 		multScale([1.0, 1.8, 1.0])
-		multRotationY(tankSpeed * Math.PI * WHEEL_RADIUS);
 		
 		//===================
 		uploadModelView();
@@ -482,11 +489,12 @@ function setup(shaders) {
 
 		// If speed = 1, it will be distributed along the angles according to the trigonometric factor of each axle.
 		let ySpeed = SHELL_SPEED * Math.sin(barrelAngle * RAD);
-		let horizontalSpeed = SHELL_SPEED * Math.cos((barrelAngle % 360) * RAD); //Mathematically similar to 'SPEED * Math.cos(barrelAngle)'
+		let horizontalSpeed = SHELL_SPEED * Math.cos(barrelAngle * RAD); //Mathematically similar to 'SPEED * Math.cos(barrelAngle)'
 
+		console.log(Math.abs(turretAngle % 360))
 		//Turret is originally aligned along the X axis, so, the reference shall be set at x+
-		let xSpeed = horizontalSpeed * Math.cos((Math.abs(turretAngle) % 360) * RAD);
-		let zSpeed = horizontalSpeed * Math.sin((Math.abs(turretAngle) % 360) * RAD); //Mathematically similar to 'SPEED * Math.cos(turretAngle)'
+		let xSpeed = horizontalSpeed * Math.cos(-(turretAngle % 360) * RAD);
+		let zSpeed = horizontalSpeed * Math.sin(-(turretAngle % 360) * RAD); //Mathematically similar to 'SPEED * Math.cos(turretAngle)'
 		
 		let shellSpeed = vec3(xSpeed, ySpeed, zSpeed);
 
