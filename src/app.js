@@ -555,7 +555,6 @@ function setup(shaders) {
 		let ySpeed = SHELL_SPEED * Math.sin(barrelAngle * RAD);
 		let horizontalSpeed = SHELL_SPEED * Math.cos(barrelAngle * RAD); //Mathematically similar to 'SPEED * Math.cos(barrelAngle)'
 
-		console.log(Math.abs(turretAngle % 360))
 		// Turret is originally aligned along the X axis, so, the reference shall be set at x+
 		let xSpeed = horizontalSpeed * Math.cos(-(turretAngle % 360) * RAD);
 		let zSpeed = horizontalSpeed * Math.sin(-(turretAngle % 360) * RAD); //Mathematically similar to 'SPEED * Math.cos(turretAngle)'
@@ -569,7 +568,7 @@ function setup(shaders) {
 	function drawShell(pos) {
 		multTranslation(pos);
 
-		multScale([0.25, 0.25, 0.25]);
+		multScale([0.2, 0.2, 0.2]);
 
 		gl.uniform3fv(uColor, flatten(vec3(1.0, 1.0, 0.0)));
 
