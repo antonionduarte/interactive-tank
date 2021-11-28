@@ -1,6 +1,6 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
-import { ortho, lookAt, flatten, vec3, vec4, inverse, mult, cross, dot } from "../libs/MV.js";
-import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation, multRotationX, multRotationZ, loadIdentity } from "../libs/stack.js";
+import { ortho, lookAt, flatten, vec3, vec4, inverse, mult } from "../libs/MV.js";
+import { modelView, loadMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation, multRotationX, multRotationZ } from "../libs/stack.js";
 
 import * as SPHERE from '../libs/sphere.js';
 import * as CUBE from '../libs/cube.js';
@@ -105,7 +105,7 @@ function setup(shaders) {
 	document.onkeydown = (event) => {
 		switch (event.key) {
 			case 'ArrowUp':
-				if(tankSpeed <= MAX_SPEED)
+				if (tankSpeed <= MAX_SPEED)
 					tankSpeed += TANK_ACCELERATION+(tankSpeed*0.1);
 				break;
 			case 'ArrowDown':
@@ -274,7 +274,7 @@ function setup(shaders) {
 		pushMatrix()
 			multTranslation([0, -2, 0])
 			
-			multScale([0.3, TANK_LENGTH + 2.5, 0.3]);
+			multScale([0.25, TANK_LENGTH + 2.5, 0.25]);
 
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR_2))
 			uploadModelView();
@@ -285,7 +285,7 @@ function setup(shaders) {
 		pushMatrix();
 			multTranslation([0, -4, 0])
 
-			multScale([0.35, 2.5, 0.35]);
+			multScale([0.30, 2.5, 0.30 ]);
 
 			gl.uniform3fv(uColor, flatten(vec3(0.184, 0.235, 0.164)))
 			uploadModelView();
@@ -542,7 +542,7 @@ function setup(shaders) {
 	}
 
 	//=========================================================================
-	//Shell addition, animation, and simulation.
+	// Shell addition, animation, and simulation.
 
 	/**
 	 * Adds a new shell to the array.
@@ -556,7 +556,7 @@ function setup(shaders) {
 		let horizontalSpeed = SHELL_SPEED * Math.cos(barrelAngle * RAD); //Mathematically similar to 'SPEED * Math.cos(barrelAngle)'
 
 		console.log(Math.abs(turretAngle % 360))
-		//Turret is originally aligned along the X axis, so, the reference shall be set at x+
+		// Turret is originally aligned along the X axis, so, the reference shall be set at x+
 		let xSpeed = horizontalSpeed * Math.cos(-(turretAngle % 360) * RAD);
 		let zSpeed = horizontalSpeed * Math.sin(-(turretAngle % 360) * RAD); //Mathematically similar to 'SPEED * Math.cos(turretAngle)'
 		
@@ -591,19 +591,19 @@ function setup(shaders) {
 
 	function simulateShells() {
 		let rem = []
-		for(const i in shells) {
+		for (const i in shells) {
 	
 			let position = shells[i].position;
 			let shellSpeed = shells[i].speed;
 
-			if(Math.round(position[1]) == 0)
+			if (Math.round(position[1]) == 0)
 				rem.push(i);
 
 			pushMatrix();
 				drawShell(position)
 			popMatrix();
 
-			for(const j in position) {
+			for (const j in position) {
 				position[j] += shellSpeed[j];
 			}
 
@@ -611,7 +611,7 @@ function setup(shaders) {
 			shells[i].speed[1] -= EARTH_ACCELERATION * 1/600;
 		}
 
-		for(const i in rem)
+		for (const i in rem)
 			shells.splice(i,1);
 	}6
 
