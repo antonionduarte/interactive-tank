@@ -1,6 +1,6 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
-import { ortho, lookAt, flatten, vec3, rotateX } from "../libs/MV.js";
-import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation, multRotationX, multRotationZ } from "../libs/stack.js";
+import { ortho, lookAt, flatten, vec3, vec4, inverse, mult, cross, dot } from "../libs/MV.js";
+import { modelView, loadMatrix, multMatrix, multRotationY, multScale, pushMatrix, popMatrix, multTranslation, multRotationX, multRotationZ, loadIdentity } from "../libs/stack.js";
 
 import * as SPHERE from '../libs/sphere.js';
 import * as CUBE from '../libs/cube.js';
@@ -16,6 +16,8 @@ let gl;
 let mProjection;
 let mView;
 
+let mBarrel;
+
 let VP_DISTANCE = 10;
 
 /* GLSL */
@@ -27,10 +29,14 @@ let speed = 1 / 60;     // Speed (how many days added to time on each render pas
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
 
-/*Tank metrics*/
+// Tank metrics
 let tankPosition = [0.0, 0.0, 0.0]
 let turretAngle = 0.0;
 let barrelAngle = 0.0;
+
+// Shell metrics
+let shells = []; // Array of vec3 tuples, (position, speed).
+const SHELL_SPEED = 20.0 * speed;
 
 /* Shader Programs */
 let program;
@@ -49,7 +55,6 @@ const MAIN_ARMOR_COLOR_2 = vec3(0.154,0.225,0.131);
 
 //Characteristics
 const TANK_LENGTH = 8.0;
-const TANK_MASS = 12000;
 const TANK_WIDTH = 4.0;
 const MIN_DIST = 1.45;
 
@@ -62,15 +67,16 @@ const MAX_ELEVATION = 30.0
 // Shell characteristics
 
 //Physics
-const ENGINE_OUTP = 1000;
-
+const TANK_ACCELERATION = 0.25;
 const MAX_SPEED = 3;
 
-const FRICTION_COEF = 0.4;
+const FRICTION_COEF = 0.95;
 const EARTH_ACCELERATION = 9.8; //m.s^2
 
+const RAD = (2 * Math.PI)/360
 
-let objSpeed = 0;
+
+let tankSpeed = 0;
 //=========================================================================
 
 function setup(shaders) {
@@ -94,12 +100,12 @@ function setup(shaders) {
 	document.onkeydown = (event) => {
 		switch (event.key) {
 			case 'ArrowUp':
-				if(objSpeed <= MAX_SPEED)
-					//TODO
+				if(tankSpeed <= MAX_SPEED)
+					tankSpeed += TANK_ACCELERATION;
 				break;
 			case 'ArrowDown':
-				if (objSpeed <= MAX_SPEED)
-					//TODO
+				if (Math.abs(tankSpeed) <= MAX_SPEED)
+					tankSpeed -= TANK_ACCELERATION;
 				break;
 			case 'w':
 				if (barrelAngle < MAX_ELEVATION)
@@ -123,7 +129,10 @@ function setup(shaders) {
 				break;
 			case 'p':
 				animation = !animation;
-				break; 
+				break;
+			case ' ':
+				addShell();
+				break;
 			case '+':
 				VP_DISTANCE -= 0.5;
 				resize_canvas();
@@ -131,6 +140,10 @@ function setup(shaders) {
 			case '-':
 				VP_DISTANCE += 0.5;
 				resize_canvas();
+				break;
+			case 'Backspace':
+				tankPosition[0] = 0;
+				tankSpeed = 0;
 				break;
 			case '1':
 				mView = lookAt(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(0, 1, 0));
@@ -186,18 +199,17 @@ function setup(shaders) {
 	
 	function drawTank(posX, posY, posZ) {
 		pushMatrix();
-			//multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
-			//mTank = modelView();
+			multTranslation([posX - (TANK_LENGTH / 2), posY + WHEEL_RADIUS, posZ - (TANK_WIDTH / 2)]);
 			
-			//drawFrame();
+			drawFrame();
 
-			// pushMatrix();
-				// drawArmour();
-			//popMatrix();
 			pushMatrix();
-				drawShell();
+				drawArmour();
 			popMatrix();
-			//drawTurret();
+			
+			pushMatrix();
+				drawTurret();
+			popMatrix();
 		popMatrix();
 	}
 
@@ -215,7 +227,7 @@ function setup(shaders) {
 
 	function drawTurret() {
 		multTranslation([TANK_LENGTH / 2, 2.50, TANK_WIDTH / 2]);
-		multRotationY(180.0 + turretAngle);
+		multRotationY(turretAngle);
 
 		pushMatrix();
 			multTranslation([0.0, -0.5, 0.0])
@@ -237,8 +249,6 @@ function setup(shaders) {
 	}
 
 	function drawTurretHull() {
-		multTranslation([0.0, 0.0, 0.0])
-		multRotationZ(barrelAngle);
 		multScale([2, 2, 2]);
 
 		gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
@@ -270,6 +280,10 @@ function setup(shaders) {
 			uploadModelView();
 
 			TORUS.draw(gl, program, mode);
+
+			pushMatrix();
+				mBarrel = modelView();
+			popMatrix();
 		popMatrix();
 	}
 
@@ -399,6 +413,7 @@ function setup(shaders) {
 	function drawWheel() {
 		multRotationX(90.0);
 		multScale([1.0, 1.8, 1.0])
+		multRotationY(tankSpeed * Math.PI * WHEEL_RADIUS);
 		
 		//===================
 		uploadModelView();
@@ -426,22 +441,6 @@ function setup(shaders) {
 		CYLINDER.draw(gl, program, mode);
 	}
 
-	//=========================================================================
-	let pos = vec3(0,0,0);
-	let vec;
-	const SPEED = 10.0 / 6000;
-	function drawShell() {
-		multRotationY(turretAngle);
-		multTranslation(pos);
-		
-		pos = [pos[0] + 0.01, pos[1], pos[2]];
-
-		multScale([0.3, 0.3, 0.3]);
-		gl.uniform3fv(uColor, flatten(vec3(1.0, 1.0, 0.0)));
-		uploadModelView();
-
-		SPHERE.draw(gl, program, mode);
-	}
 
 	//=========================================================================
 	// Tileset Drawing
@@ -472,13 +471,80 @@ function setup(shaders) {
 	}
 
 	//=========================================================================
-	function simulate() {
-		//TODO
+	//Shell addition, animation, and simulation.
+
+	/**
+	 * Adds a new shell to the array.
+	 */
+	function addShell() {
+		let wc = mult(inverse(mView), mBarrel);
+		let position = mult(wc, vec4(0.0, 0.0, 0.0, 1.0))
+
+		// If speed = 1, it will be distributed along the angles according to the trigonometric factor of each axle.
+		let ySpeed = SHELL_SPEED * Math.sin(barrelAngle * RAD);
+		let horizontalSpeed = SHELL_SPEED * Math.cos((barrelAngle % 360) * RAD); //Mathematically similar to 'SPEED * Math.cos(barrelAngle)'
+
+		//Turret is originally aligned along the X axis, so, the reference shall be set at x+
+		let xSpeed = horizontalSpeed * Math.cos((Math.abs(turretAngle) % 360) * RAD);
+		let zSpeed = horizontalSpeed * Math.sin((Math.abs(turretAngle) % 360) * RAD); //Mathematically similar to 'SPEED * Math.cos(turretAngle)'
+		
+		let shellSpeed = vec3(xSpeed, ySpeed, zSpeed);
+
+		let aux = {position: vec3(position[0], position[1], position[2]), speed: shellSpeed};
+		shells.push(aux);
 	}
 
-	function calcAcceleration(forces = [0]) {
-		//TODO
+	function drawShell(pos) {
+		multTranslation(pos);
+
+		multScale([0.25, 0.25, 0.25]);
+
+		gl.uniform3fv(uColor, flatten(vec3(1.0, 1.0, 0.0)));
+
+		uploadModelView();
+
+		SPHERE.draw(gl, program, mode);
 	}
+
+	//=========================================================================
+	//Physics simulations
+
+	function simulate() {
+		tankPosition[0] += tankSpeed;
+
+		tankSpeed *= FRICTION_COEF;
+
+		
+		simulateShells();
+	}
+
+	function simulateShells() {
+		let rem = []
+		for(const i in shells) {
+	
+			let position = shells[i].position;
+			let shellSpeed = shells[i].speed;
+
+			if(Math.round(position[1]) == 0)
+				rem.push(i);
+
+			pushMatrix();
+				drawShell(position)
+			popMatrix();
+
+			for(const j in position) {
+				position[j] += shellSpeed[j];
+			}
+
+			shells[i].position = position;
+			shells[i].speed[1] -= EARTH_ACCELERATION * 1/6000;
+		}
+
+		for(const i in rem)
+			shells.splice(i,1);
+	}
+
+	//=========================================================================
 
 	function render() {
 		if (animation) time += speed;
