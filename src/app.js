@@ -236,13 +236,13 @@ function setup(shaders) {
 
 	//=========================================================================
 	function drawTurret() {
-		multTranslation([TANK_LENGTH / 2, 2.50, TANK_WIDTH / 2]);
+		multTranslation([TANK_LENGTH / 2 + 2, TANK_HEIGHT, TANK_WIDTH / 2]);
 		multRotationY(turretAngle);
-		multScale([0.75, 0.75, 0.75])
+		multScale([0.9, 0.9, 0.9])
 
 		pushMatrix();
-			multTranslation([0.0, -0.5, 0.0])
-			multScale([3.25, 1.0, 2.75]);
+			multTranslation([0.0, -0.2, 0.0])
+			multScale([2.7, 0.1, 2.7]);
 
 			gl.uniform3fv(uColor, flatten(MAIN_ARMOR_COLOR))
 			uploadModelView();
