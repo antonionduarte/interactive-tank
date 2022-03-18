@@ -13,6 +13,8 @@ Control | Key
 --------|--------
 Move Forward | <kbd>up</kbd>
 Move Backward | <kbd>down</kbd>
-Turret Up | <kbd>W</kbd>
-Turret Down | <kbd>S</kbd>
+Turret Up | <kbd>w</kbd>
+Turret Down | <kbd>s</kbd>
 Shoot | <kbd>space</kbd>
+Wireframe Mode | <kbd>W</kbd>
+Solid Mode | <kbd>S</kbd>
