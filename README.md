@@ -11,3 +11,8 @@ https://antonionduarte.github.io/interactive-tank/src/index.html
 
 Control | Key
 --------|--------
+Move Forward | <kbd>up</kbd>
+Move Backward | <kbd>down</kbd>
+Turret Up | <kbd>W</kbd>
+Turret Down | <kbd>S</kbd>
+Shoot | <kbd>space</kbd>
