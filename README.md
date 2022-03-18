@@ -18,3 +18,8 @@ Turret Down | <kbd>s</kbd>
 Shoot | <kbd>space</kbd>
 Wireframe Mode | <kbd>W</kbd>
 Solid Mode | <kbd>S</kbd>
+
+# Screenshots
+
+![Screen](https://raw.githubusercontent.com/antonionduarte/interactive-tank/main/screenshots/1.png)
+
